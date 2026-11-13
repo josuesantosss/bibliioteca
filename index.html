@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca Web App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 20px; color: #1a73e8; }
+    
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 10px 18px; background: #fff; border: 1px solid #dadce0; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 500; }
+    .tab.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    
+    .panel { display: none; background: #fff; padding: 24px; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .panel.active { display: block; }
+    
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 14px; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid #dadce0; border-radius: 6px; font-size: 14px; }
+    input:focus, select:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,.15); }
+    
+    button { padding: 10px 20px; background: #1a73e8; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+    button:hover { background: #1557b0; }
+    button:disabled { background: #9aa0a6; cursor: not-allowed; }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+    
+    .msg { padding: 10px 14px; border-radius: 6px; margin-top: 12px; font-size: 14px; display: none; }
+    .msg.ok { background: #e6f4ea; color: #137333; display: block; }
+    .msg.err { background: #fce8e6; color: #c5221f; display: block; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #e8eaed; }
+    th { background: #f8f9fa; font-weight: 600; }
+    tr:hover td { background: #f8f9fa; }
+    
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+    .badge-disponivel { background: #e6f4ea; color: #137333; }
+    .badge-emprestado { background: #fef7e0; color: #b06000; }
+    .badge-baixado { background: #fce8e6; color: #c5221f; }
+    
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .search-box { display: flex; gap: 8px; margin-bottom: 16px; }
+    .search-box input { flex: 1; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>📚 Biblioteca</h1>
+  
+  <div class="tabs">
+    <div class="tab active" data-panel="catalogo">Catálogo</div>
+    <div class="tab" data-panel="retirada">Retirada</div>
+    <div class="tab" data-panel="devolucao">Devolução</div>
+    <div class="tab" data-panel="baixa">Dar Baixa</div>
+    <div class="tab" data-panel="bibliotecarios">Bibliotecários</div>
+  </div>
+  
+  <!-- ===== CATÁLOGO ===== -->
+  <div class="panel active" id="panel-catalogo">
+    <h3>Catálogo de Livros</h3>
+    <div class="search-box">
+      <input type="text" id="busca-termo" placeholder="Buscar por título, autor ou ISBN..." onkeyup="if(event.key==='Enter')buscarCatalogo()">
+      <button onclick="buscarCatalogo()">Buscar</button>
+    </div>
+    
+    <h3 style="margin-top:24px;">Cadastrar Novo Livro</h3>
+    <div class="grid-2">
+      <div class="form-group"><label>Título *</label><input id="cad-titulo"></div>
+      <div class="form-group"><label>Autor *</label><input id="cad-autor"></div>
+      <div class="form-group"><label>ISBN</label><input id="cad-isbn"></div>
+      <div class="form-group"><label>Ano</label><input id="cad-ano" type="number"></div>
+      <div class="form-group"><label>Localização</label><input id="cad-local" placeholder="Ex: Estante A3"></div>
+    </div>
+    <button onclick="cadastrarLivro()" id="btn-cad">Cadastrar Livro</button>
+    <div class="msg" id="msg-cad"></div>
+    
+    <div id="tabela-catalogo" style="margin-top:20px;"></div>
+  </div>
+  
+  <!-- ===== RETIRADA ===== -->
+  <div class="panel" id="panel-retirada">
+    <h3>Registrar Retirada</h3>
+    <div class="form-group">
+      <label>Livro Disponível *</label>
+      <select id="ret-livro"><option value="">Carregando...</option></select>
+    </div>
+    <div class="form-group"><label>Nome do Leitor *</label><input id="ret-leitor" placeholder="Nome completo"></div>
+    <div class="form-group"><label>Prazo (dias)</label><input id="ret-dias" type="number" value="7"></div>
+    <button onclick="realizarRetirada()" id="btn-ret">Confirmar Retirada</button>
+    <div class="msg" id="msg-ret"></div>
+  </div>
+  
+  <!-- ===== DEVOLUÇÃO ===== -->
+  <div class="panel" id="panel-devolucao">
+    <h3>Registrar Devolução</h3>
+    <div class="form-group">
+      <label>Empréstimo Ativo *</label>
+      <select id="dev-emprestimo"><option value="">Carregando...</option></select>
+    </div>
+    <button onclick="realizarDevolucao()" id="btn-dev">Confirmar Devolução</button>
+    <div class="msg" id="msg-dev"></div>
+  </div>
+  
+  <!-- ===== DAR BAIXA ===== -->
+  <div class="panel" id="panel-baixa">
+    <h3>Dar Baixa em Livro</h3>
+    <div class="form-group">
+      <label>Livro (não emprestado) *</label>
+      <select id="baixa-livro"><option value="">Carregando...</option></select>
+    </div>
+    <div class="form-group">
+      <label>Motivo *</label>
+      <select id="baixa-motivo">
+        <option value="Perdido">Perdido</option>
+        <option value="Danificado">Danificado</option>
+        <option value="Descartado">Descartado</option>
+        <option value="Desatualizado">Desatualizado</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Bibliotecário Responsável</label>
+      <select id="baixa-bib"><option value="">Carregando...</option></select>
+    </div>
+    <button onclick="executarBaixa()" id="btn-baixa">Confirmar Baixa</button>
+    <div class="msg" id="msg-baixa"></div>
+  </div>
+  
+  <!-- ===== BIBLIOTECÁRIOS ===== -->
+  <div class="panel" id="panel-bibliotecarios">
+    <h3>Cadastrar Bibliotecário</h3>
+    <div class="grid-2">
+      <div class="form-group"><label>Nome *</label><input id="bib-nome"></div>
+      <div class="form-group"><label>Email</label><input id="bib-email" type="email"></div>
+      <div class="form-group"><label>Telefone</label><input id="bib-tel"></div>
+    </div>
+    <button onclick="cadastrarBibliotecario()" id="btn-bib">Cadastrar</button>
+    <div class="msg" id="msg-bib"></div>
+    <div id="tabela-bibs" style="margin-top:20px;"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CLIENT-SIDE JAVASCRIPT
+// ============================================================
+
+// ---- TABS ----
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('panel-' + this.dataset.panel).classList.add('active');
+    
+    if (this.dataset.panel === 'retirada') carregarLivrosDisponiveis();
+    if (this.dataset.panel === 'devolucao') carregarEmprestimosAtivos();
+    if (this.dataset.panel === 'baixa') carregarParaBaixa();
+    if (this.dataset.panel === 'bibliotecarios') carregarBibliotecarios();
+  });
+});
+
+// ---- HELPERS ----
+function mostrarMsg(id, texto, tipo) {
+  const el = document.getElementById(id);
+  el.textContent = texto;
+  el.className = 'msg ' + tipo;
+  setTimeout(() => { el.className = 'msg'; }, 5000);
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.original = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> Processando...';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.original || btn.innerHTML;
+  }
+}
+
+function badgeStatus(status) {
+  const map = {
+    'Disponível': 'badge-disponivel',
+    'Emprestado': 'badge-emprestado',
+    'Baixado': 'badge-baixado'
+  };
+  return `<span class="badge ${map[status] || ''}">${status}</span>`;
+}
+
+// ---- CATÁLOGO ----
+function buscarCatalogo() {
+  const termo = document.getElementById('busca-termo').value;
+  google.script.run.withSuccessHandler(function(livros) {
+    let html = '<table><tr><th>ID</th><th>Título</th><th>Autor</th><th>ISBN</th><th>Status</th></tr>';
+    if (livros.length === 0) {
+      html += '<tr><td colspan="5" style="text-align:center;color:#888;">Nenhum livro encontrado.</td></tr>';
+    } else {
+      livros.forEach(l => {
+        html += `<tr><td>${l.id}</td><td>${l.titulo}</td><td>${l.autor}</td><td>${l.isbn}</td><td>${badgeStatus(l.status)}</td></tr>`;
+      });
+    }
+    html += '</table>';
+    document.getElementById('tabela-catalogo').innerHTML = html;
+  }).buscarLivros(termo);
+}
+
+function cadastrarLivro() {
+  const dados = {
+    titulo: document.getElementById('cad-titulo').value.trim(),
+    autor: document.getElementById('cad-autor').value.trim(),
+    isbn: document.getElementById('cad-isbn').value.trim(),
+    ano: document.getElementById('cad-ano').value,
+    localizacao: document.getElementById('cad-local').value.trim()
+  };
+  
+  if (!dados.titulo || !dados.autor) {
+    mostrarMsg('msg-cad', 'Preencha Título e Autor.', 'err');
+    return;
+  }
+  
+  setLoading('btn-cad', true);
+  google.script.run.withSuccessHandler(function(res) {
+    setLoading('btn-cad', false);
+    mostrarMsg('msg-cad', res.mensagem, res.sucesso ? 'ok' : 'err');
+    if (res.sucesso) {
+      document.getElementById('cad-titulo').value = '';
+      document.getElementById('cad-autor').value = '';
+      document.getElementById('cad-isbn').value = '';
+      document.getElementById('cad-ano').value = '';
+      document.getElementById('cad-local').value = '';
+      buscarCatalogo();
+    }
+  }).cadastrarLivro(dados);
+}
+
+// ---- RETIRADA ----
+function carregarLivrosDisponiveis() {
+  google.script.run.withSuccessHandler(function(livros) {
+    const sel = document.getElementById('ret-livro');
+    sel.innerHTML = '<option value="">Selecione um livro...</option>';
+    livros.forEach(l => {
+      sel.innerHTML += `<option value="${l.id}">${l.titulo} — ${l.autor} (${l.id})</option>`;
+    });
+  }).listarLivrosDisponiveis();
+}
+
+function realizarRetirada() {
+  const idLivro = document.getElementById('ret-livro').value;
+  const leitor = document.getElementById('ret-leitor').value.trim();
+  const dias = document.getElementById('ret-dias').value;
+  
+  if (!idLivro || !leitor) {
+    mostrarMsg('msg-ret', 'Selecione o livro e informe o leitor.', 'err');
+    return;
+  }
+  
+  setLoading('btn-ret', true);
+  google.script.run.withSuccessHandler(function(res) {
+    setLoading('btn-ret', false);
+    mostrarMsg('msg-ret', res.mensagem, res.sucesso ? 'ok' : 'err');
+    if (res.sucesso) {
+      document.getElementById('ret-leitor').value = '';
+      carregarLivrosDisponiveis();
+    }
+  }).realizarRetirada(idLivro, leitor, dias);
+}
+
+// ---- DEVOLUÇÃO ----
+function carregarEmprestimosAtivos() {
+  google.script.run.withSuccessHandler(function(emps) {
+    const sel = document.getElementById('dev-emprestimo');
+    sel.innerHTML = '<option value="">Selecione um empréstimo...</option>';
+    emps.forEach(e => {
+      sel.innerHTML += `<option value="${e.id}">${e.titulo} — ${e.leitor} (Prazo: ${e.prazo})</option>`;
+    });
+  }).listarEmprestimosAtivos();
+}
+
+function realizarDevolucao() {
+  const id = document.getElementById('dev-emprestimo').value;
+  if (!id) {
+    mostrarMsg('msg-dev', 'Selecione um empréstimo.', 'err');
+    return;
+  }
+  
+  setLoading('btn-dev', true);
+  google.script.run.withSuccessHandler(function(res) {
+    setLoading('btn-dev', false);
+    mostrarMsg('msg-dev', res.mensagem, res.sucesso ? 'ok' : 'err');
+    if (res.sucesso) carregarEmprestimosAtivos();
+  }).realizarDevolucao(id);
+}
+
+// ---- DAR BAIXA ----
+function carregarParaBaixa() {
+  google.script.run.withSuccessHandler(function(livros) {
+    const sel = document.getElementById('baixa-livro');
+    sel.innerHTML = '<option value="">Selecione um livro...</option>';
+    livros.filter(l => l.status !== 'Emprestado' && l.status !== 'Baixado').forEach(l => {
+      sel.innerHTML += `<option value="${l.id}">${l.titulo} (${l.status})</option>`;
+    });
+  }).buscarLivros('');
+  
+  google.script.run.withSuccessHandler(function(bibs) {
+    const sel = document.getElementById('baixa-bib');
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    bibs.forEach(b => {
+      sel.innerHTML += `<option value="${b.nome}">${b.nome}</option>`;
+    });
+  }).listarBibliotecarios();
+}
+
+function executarBaixa() {
+  const id = document.getElementById('baixa-livro').value;
+  const motivo = document.getElementById('baixa-motivo').value;
+  const bib = document.getElementById('baixa-bib').value;
+  
+  if (!id) {
+    mostrarMsg('msg-baixa', 'Selecione um livro.', 'err');
+    return;
+  }
+  
+  if (!confirm('Confirmar baixa do livro selecionado? Esta ação não pode ser desfeita.')) return;
+  
+  setLoading('btn-baixa', true);
+  google.script.run.withSuccessHandler(function(res) {
+    setLoading('btn-baixa', false);
+    mostrarMsg('msg-baixa', res.mensagem, res.sucesso ? 'ok' : 'err');
+    if (res.sucesso) carregarParaBaixa();
+  }).darBaixa(id, motivo, bib);
+}
+
+// ---- BIBLIOTECÁRIOS ----
+function cadastrarBibliotecario() {
+  const dados = {
+    nome: document.getElementById('bib-nome').value.trim(),
+    email: document.getElementById('bib-email').value.trim(),
+    telefone: document.getElementById('bib-tel').value.trim()
+  };
+  
+  if (!dados.nome) {
+    mostrarMsg('msg-bib', 'Informe o nome.', 'err');
+    return;
+  }
+  
+  setLoading('btn-bib', true);
+  google.script.run.withSuccessHandler(function(res) {
+    setLoading('btn-bib', false);
+    mostrarMsg('msg-bib', res.mensagem, res.sucesso ? 'ok' : 'err');
+    if (res.sucesso) {
+      document.getElementById('bib-nome').value = '';
+      document.getElementById('bib-email').value = '';
+      document.getElementById('bib-tel').value = '';
+      carregarBibliotecarios();
+    }
+  }).cadastrarBibliotecario(dados);
+}
+
+function carregarBibliotecarios() {
+  google.script.run.withSuccessHandler(function(bibs) {
+    let html = '<table><tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th></tr>';
+    if (bibs.length === 0) {
+      html += '<tr><td colspan="4" style="text-align:center;color:#888;">Nenhum bibliotecário cadastrado.</td></tr>';
+    } else {
+      bibs.forEach(b => {
+        html += `<tr><td>${b.id}</td><td>${b.nome}</td><td>${b.email}</td><td>${b.telefone}</td></tr>`;
+      });
+    }
+    html += '</table>';
+    document.getElementById('tabela-bibs').innerHTML = html;
+  }).listarBibliotecarios();
+}
+
+// ---- INICIALIZAÇÃO ----
+buscarCatalogo();
+</script>
+</body>
+</html>
