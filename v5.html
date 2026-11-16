@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca</title>
+<style>
+:root{
+  --primary:#4f46e5; --primary-d:#4338ca; --success:#10b981; --danger:#ef4444;
+  --warning:#f59e0b; --bg:#f1f5f9; --card:#fff; --border:#e2e8f0;
+  --text:#0f172a; --muted:#64748b;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.05);
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit}
+
+.loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px)}
+.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#ec4899 100%)}
+.login-card{background:#fff;width:100%;max-width:400px;border-radius:20px;padding:40px 32px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.login-card .logo{font-size:56px;text-align:center;line-height:1;margin-bottom:12px}
+.login-card h1{text-align:center;font-size:26px;margin-bottom:6px;color:var(--text)}
+.login-card .subtitle{text-align:center;color:var(--muted);font-size:14px;margin-bottom:28px}
+
+.input-group{margin-bottom:16px}
+.input-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.input-group input,.input-group select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;transition:.15s}
+.input-group input:focus,.input-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+
+.input-with-btn{display:flex;gap:8px;align-items:stretch}
+.input-with-btn input,
+.input-with-btn select{flex:1;min-width:0;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;transition:.15s}
+.input-with-btn input:focus,
+.input-with-btn select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+.input-with-btn .btn{white-space:nowrap}
+
+.btn{padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d)}
+.btn-primary:disabled{background:#94a3b8;cursor:not-allowed}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:#f8fafc;color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-block{width:100%}
+
+.msg{margin-top:14px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:500;display:none}
+.msg.ok{background:#d1fae5;color:#065f46;display:block}
+.msg.err{background:#fee2e2;color:#991b1b;display:block}
+
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:24px;height:64px;box-shadow:0 1px 2px rgba(0,0,0,.03);position:sticky;top:0;z-index:100}
+.brand{font-size:18px;font-weight:700;color:var(--primary);white-space:nowrap}
+.nav{display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;transition:.15s}
+.nav-btn:hover{background:#f1f5f9;color:var(--text)}
+.nav-btn.active{background:var(--primary);color:#fff}
+.user-info{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.user-info span{font-size:13px;font-weight:600;color:var(--text)}
+.user-info span::before{content:'👤 '}
+
+.main{flex:1;max-width:1200px;width:100%;margin:0 auto;padding:28px 24px}
+.panel{display:none;animation:fadeIn .2s}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+.card h2{font-size:18px;margin-bottom:18px;color:var(--text);display:flex;align-items:center;gap:8px}
+.card h2::before{content:'';width:4px;height:20px;background:var(--primary);border-radius:2px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}.topbar{padding:0 12px;gap:12px;flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px}.nav{order:3;flex-basis:100%;justify-content:flex-start}.input-with-btn{flex-direction:column}}
+@media(max-width:900px){.grid-3{grid-template-columns:1fr 1fr}}
+
+/* Dashboard */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-left:4px solid var(--primary)}
+.stat-card.s-success{border-left-color:var(--success)}
+.stat-card.s-warning{border-left-color:var(--warning)}
+.stat-card.s-danger {border-left-color:var(--danger)}
+.stat-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.stat-value{font-size:32px;font-weight:800;color:var(--text);line-height:1}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:8px}
+
+.search-bar{display:flex;gap:10px;margin-bottom:18px}
+.search-bar input{flex:1;min-width:0}
+
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:#f8fafc;font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f8fafc}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.badge-disponivel{background:#d1fae5;color:#065f46}
+.badge-emprestado{background:#fef3c7;color:#92400e}
+.badge-baixado{background:#fee2e2;color:#991b1b}
+.badge-atraso{background:#fee2e2;color:#991b1b;margin-left:6px}
+.badge-turma{background:#e0e7ff;color:#3730a3}
+.badge-fonte{background:#f1f5f9;color:#475569;font-size:10px;margin-left:8px}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+
+/* Painel de informações do livro/empréstimo */
+.book-info{
+  background:#f8fafc;
+  border:1px solid var(--border);
+  border-left:4px solid var(--primary);
+  border-radius:10px;
+  padding:14px 16px;
+  margin-top:10px;
+  font-size:13px;
+}
+.book-info .info-row{margin-bottom:6px;color:var(--text);line-height:1.5}
+.book-info .info-row:last-child{margin-bottom:0}
+.book-info .info-row strong{color:var(--muted);font-weight:600;margin-right:4px}
+.book-info .badge{margin-left:6px}
+
+/* Scanner de código de barras */
+.scanner-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;backdrop-filter:blur(3px)}
+.scanner-box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.scanner-box h3{font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--text)}
+.scanner-reader{width:100%;min-height:280px;border-radius:10px;overflow:hidden;background:#000;position:relative}
+.scanner-reader video{width:100%!important;height:auto!important;display:block}
+.scanner-reader__dashboard_section_csr button{padding:6px 10px!important}
+.scanner-hint{font-size:12px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.5}
+.scanner-manual{margin-top:14px}
+.scanner-manual label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--muted)}
+.scanner-manual input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px}
+.scanner-manual input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+.scanner-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+
+/* Preview da capa no cadastro */
+.capa-preview{display:flex;gap:12px;align-items:center;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;margin-bottom:14px}
+.capa-preview img{width:60px;height:90px;object-fit:cover;border-radius:6px;background:#e2e8f0;flex-shrink:0}
+.capa-preview .info{flex:1;min-width:0}
+.capa-preview .info .titulo{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.capa-preview .info .autor{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.capa-preview .info .fonte{font-size:11px;color:#94a3b8;margin-top:4px}
+.capa-preview .info .fonte::before{content:'Fonte: '}
+
+/* Resultados de busca online */
+.resultados-online{display:flex;flex-direction:column;gap:10px;padding:6px 0}
+.resultado-item{display:flex;gap:12px;align-items:center;padding:12px;background:#fff;border-radius:10px;border:1px solid var(--border);text-align:left}
+.resultado-item img{width:50px;height:75px;object-fit:cover;border-radius:4px;background:#e2e8f0;flex-shrink:0}
+.resultado-item .info{flex:1;min-width:0}
+.resultado-item .info .titulo{font-weight:600;color:var(--text);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resultado-item .info .sub{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resultado-item .info .isbn{font-size:11px;color:#94a3b8;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay" class="loading-overlay hidden"><div class="spinner"></div></div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="logo">📚</div>
+    <h1>Biblioteca</h1>
+    <p class="subtitle">Acesse sua conta para continuar</p>
+    <form id="login-form">
+      <div class="input-group">
+        <label for="login-user">Usuário</label>
+        <input id="login-user" type="text" autocomplete="username" required>
+      </div>
+      <div class="input-group">
+        <label for="login-pass">Senha</label>
+        <input id="login-pass" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="btn-login">Entrar</button>
+      <div id="login-msg" class="msg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <div class="brand">📚 Biblioteca</div>
+    <nav class="nav">
+      <button class="nav-btn active" data-panel="dashboard">Dashboard</button>
+      <button class="nav-btn" data-panel="catalogo">Catálogo</button>
+      <button class="nav-btn" data-panel="retirada">Retirada</button>
+      <button class="nav-btn" data-panel="devolucao">Devolução</button>
+      <button class="nav-btn" data-panel="baixa">Baixa</button>
+      <button class="nav-btn" data-panel="alunos">Alunos</button>
+      <button class="nav-btn" data-panel="bibliotecarios">Bibliotecários</button>
+      <button class="nav-btn hidden" data-panel="usuarios" id="nav-usuarios">Usuários</button>
+    </nav>
+    <div class="user-info">
+      <span id="user-name"></span>
+      <button class="btn btn-ghost" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="panel active" id="panel-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Livros cadastrados</div>
+          <div class="stat-value" id="stat-livros">—</div>
+          <div class="stat-sub" id="stat-livros-sub">—</div>
+        </div>
+        <div class="stat-card s-success">
+          <div class="stat-label">Empréstimos totais</div>
+          <div class="stat-value" id="stat-total-emp">—</div>
+          <div class="stat-sub">desde o início</div>
+        </div>
+        <div class="stat-card s-warning">
+          <div class="stat-label">Empréstimos ativos</div>
+          <div class="stat-value" id="stat-ativos">—</div>
+          <div class="stat-sub">em aberto</div>
+        </div>
+        <div class="stat-card s-danger">
+          <div class="stat-label">Livros atrasados</div>
+          <div class="stat-value" id="stat-atrasados">—</div>
+          <div class="stat-sub">fora do prazo</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Alunos com devolução em atraso</h2>
+        <div id="tabela-atrasados" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ============ CATÁLOGO ============ -->
+    <section class="panel" id="panel-catalogo">
+      <div class="card">
+        <h2>Acervo</h2>
+        <div class="search-bar">
+          <input id="busca-termo" type="text" placeholder="Buscar por título, autor ou ISBN..." oninput="buscarCatalogo()">
+          <button type="button" class="btn btn-primary" onclick="abrirScanner('busca')" title="Escanear código de barras">📷 Escanear</button>
+        </div>
+        <div id="tabela-catalogo" class="table-wrap"></div>
+      </div>
+      <div class="card" id="card-cadastro-livro">
+        <h2>Cadastrar novo livro</h2>
+        <div class="grid-2">
+          <div class="input-group"><label>Título *</label><input id="cad-titulo"></div>
+          <div class="input-group"><label>Autor *</label><input id="cad-autor"></div>
+        </div>
+        <div class="input-group">
+          <label>ISBN / Código de barras</label>
+          <div class="input-with-btn">
+            <input id="cad-isbn" placeholder="Digite, escaneie ou busque na internet…">
+            <button type="button" class="btn btn-primary" onclick="abrirScanner('isbn')" title="Escanear código de barras">📷 Escanear</button>
+            <button type="button" class="btn btn-ghost" onclick="buscarDadosLivroManual()" title="Buscar dados do livro na internet pelo ISBN">🔍 Buscar online</button>
+          </div>
+        </div>
+        <div id="cad-capa-preview" class="capa-preview hidden">
+          <img id="cad-capa-img" src="" alt="Capa">
+          <div class="info">
+            <div class="titulo" id="cad-preview-titulo"></div>
+            <div class="autor" id="cad-preview-autor"></div>
+            <div class="fonte" id="cad-preview-fonte"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="input-group"><label>Ano</label><input id="cad-ano" type="number"></div>
+          <div class="input-group"><label>Localização</label><input id="cad-local" placeholder="Ex: Estante A3"></div>
+        </div>
+        <button class="btn btn-primary" id="btn-cad" onclick="cadastrarLivro()">Cadastrar livro</button>
+        <div id="msg-cad" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- ============ RETIRADA ============ -->
+    <section class="panel" id="panel-retirada">
+      <div class="card">
+        <h2>Registrar retirada</h2>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Turma *</label>
+            <select id="ret-turma" onchange="carregarAlunosDaTurma()">
+              <option value="">Selecione…</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Aluno *</label>
+            <select id="ret-aluno">
+              <option value="">Selecione a turma primeiro…</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Livro disponível *</label>
+          <div class="input-with-btn">
+            <select id="ret-livro" onchange="onRetLivroChange()">
+              <option value="">Carregando…</option>
+            </select>
+            <button type="button" class="btn btn-primary" onclick="abrirScanner('retirada')" title="Escanear código de barras do livro">📷 Escanear</button>
+          </div>
+        </div>
+        <div id="ret-info" class="book-info hidden"></div>
+        <div class="input-group" style="margin-top:14px">
+          <label>Prazo (dias)</label>
+          <input id="ret-dias" type="number" value="7">
+        </div>
+        <button class="btn btn-primary" id="btn-ret" onclick="realizarRetirada()">Confirmar retirada</button>
+        <div id="msg-ret" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- ============ DEVOLUÇÃO ============ -->
+    <section class="panel" id="panel-devolucao">
+      <div class="card">
+        <h2>Registrar devolução</h2>
+        <div class="input-group">
+          <label>Empréstimo ativo *</label>
+          <div class="input-with-btn">
+            <select id="dev-emprestimo" onchange="onDevEmprestimoChange()">
+              <option value="">Carregando…</option>
+            </select>
+            <button type="button" class="btn btn-primary" onclick="abrirScanner('devolucao')" title="Escanear código de barras do livro">📷 Escanear</button>
+          </div>
+        </div>
+        <div id="dev-info" class="book-info hidden"></div>
+        <button class="btn btn-primary" id="btn-dev" onclick="realizarDevolucao()" style="margin-top:14px">Confirmar devolução</button>
+        <div id="msg-dev" class="msg"></div>
+      </div>
+      <div class="card">
+        <h2>Histórico de empréstimos</h2>
+        <div id="tabela-historico" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ============ BAIXA ============ -->
+    <section class="panel" id="panel-baixa">
+      <div class="card">
+        <h2>Dar baixa em livro</h2>
+        <div class="input-group">
+          <label>Livro *</label>
+          <select id="baixa-livro"><option value="">Carregando…</option></select>
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Motivo *</label>
+            <select id="baixa-motivo">
+              <option>Perdido</option><option>Danificado</option>
+              <option>Descartado</option><option>Desatualizado</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Bibliotecário responsável</label>
+            <select id="baixa-bib"><option value="">Selecione…</option></select>
+          </div>
+        </div>
+        <button class="btn btn-danger" id="btn-baixa" onclick="executarBaixa()">Confirmar baixa</button>
+        <div id="msg-baixa" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- ============ ALUNOS ============ -->
+    <section class="panel" id="panel-alunos">
+      <div class="card">
+        <h2>Cadastrar aluno</h2>
+        <div class="grid-2">
+          <div class="input-group"><label>Nome *</label><input id="aluno-nome"></div>
+          <div class="input-group">
+            <label>Turma *</label>
+            <select id="aluno-turma"><option value="">Selecione…</option></select>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-aluno" onclick="cadastrarAluno()">Cadastrar</button>
+        <div id="msg-aluno" class="msg"></div>
+      </div>
+      <div class="card">
+        <h2>Consultar alunos por turma</h2>
+        <div class="input-group">
+          <label>Turma</label>
+          <select id="consulta-turma" onchange="carregarAlunosConsulta()">
+            <option value="">Selecione…</option>
+          </select>
+        </div>
+        <div id="tabela-alunos-consulta" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ============ BIBLIOTECÁRIOS ============ -->
+    <section class="panel" id="panel-bibliotecarios">
+      <div class="card">
+        <h2>Cadastrar bibliotecário</h2>
+        <div class="grid-3">
+          <div class="input-group"><label>Nome *</label><input id="bib-nome"></div>
+          <div class="input-group"><label>Email</label><input id="bib-email" type="email"></div>
+          <div class="input-group"><label>Telefone</label><input id="bib-tel"></div>
+        </div>
+        <button class="btn btn-primary" id="btn-bib" onclick="cadastrarBibliotecario()">Cadastrar</button>
+        <div id="msg-bib" class="msg"></div>
+      </div>
+      <div class="card">
+        <h2>Bibliotecários cadastrados</h2>
+        <div id="tabela-bibs" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ============ USUÁRIOS ============ -->
+    <section class="panel" id="panel-usuarios">
+      <div class="card">
+        <h2>Novo usuário de acesso</h2>
+        <div class="grid-3">
+          <div class="input-group"><label>Nome *</label><input id="usr-nome"></div>
+          <div class="input-group"><label>Usuário *</label><input id="usr-user" autocomplete="off"></div>
+          <div class="input-group"><label>Senha *</label><input id="usr-pass" type="password" autocomplete="new-password"></div>
+        </div>
+        <div class="input-group">
+          <label>Perfil</label>
+          <select id="usr-perfil">
+            <option value="bibliotecario">Bibliotecário</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-usr" onclick="cadastrarUsuario()">Criar usuário</button>
+        <div id="msg-usr" class="msg"></div>
+      </div>
+      <div class="card">
+        <h2>Usuários cadastrados</h2>
+        <div id="tabela-usuarios" class="table-wrap"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ MODAL SCANNER ============ -->
+<div id="scanner-modal" class="scanner-modal hidden">
+  <div class="scanner-box">
+    <h3>📷 Escanear código de barras</h3>
+    <div id="scanner-reader" class="scanner-reader"></div>
+    <div class="scanner-hint">
+      Aponte a câmera para o código de barras do livro.<br>
+      Se a câmera não funcionar, digite o código abaixo.
+    </div>
+    <div class="scanner-manual">
+      <label for="scanner-manual-input">Digitar código manualmente</label>
+      <input id="scanner-manual-input" type="text" placeholder="Digite o código e pressione Enter"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();processarCodigo(this.value);}">
+    </div>
+    <div class="scanner-actions">
+      <button type="button" class="btn btn-ghost" onclick="fecharScanner()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+/* ==========================================================
+   CONFIG — cole a URL do Web App /exec
+   ========================================================== */
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyTEpbFCWseb27D3WicKJA_xgxXH4KhamaIYPAisrjVmTMGtDQhFc0uzMKYFItsSZlJ/exec';
+
+/* ==========================================================
+   ESTADO E HELPERS
+   ========================================================== */
+let TOKEN = null;
+let USUARIO = null;
+
+/* Caches em memória para os info-panels */
+let _livroDispCache = {};   // id -> livro (disponível)
+let _empCache = {};         // id -> emprestimo ativo
+let _livroPorTitulo = {};   // titulo (lower trim) -> livro
+
+const $ = id => document.getElementById(id);
+const showLoad = () => $('loading-overlay').classList.remove('hidden');
+const hideLoad = () => $('loading-overlay').classList.add('hidden');
+
+function callGAS(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    showLoad();
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn, args })
+    })
+      .then(r => r.text())
+      .then(txt => {
+        hideLoad();
+        let j;
+        try { j = JSON.parse(txt); }
+        catch (_) {
+          reject(new Error('Resposta inválida do servidor. Confira a URL do Web App e o deploy como "Qualquer pessoa".'));
+          return;
+        }
+        if (j.ok) resolve(j.data);
+        else reject(new Error(j.error || 'Erro desconhecido'));
+      })
+      .catch(e => { hideLoad(); reject(e); });
+  });
+}
+
+function callAuth(fn, ...args) { return callGAS(fn, TOKEN, ...args); }
+
+function showMsg(id, texto, tipo) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = texto || '';
+  el.className = 'msg' + (texto ? ' ' + tipo : '');
+  if (texto) setTimeout(() => { el.className = 'msg'; }, 6000);
+}
+
+function badge(status) {
+  const map = { 'Disponível':'badge-disponivel', 'Emprestado':'badge-emprestado', 'Baixado':'badge-baixado' };
+  return `<span class="badge ${map[status]||''}">${escapeHtml(status)}</span>`;
+}
+
+function tratarErroSessao(e) {
+  if (e && /Sess[ãa]o expirada/i.test(e.message)) {
+    alert('Sua sessão expirou. Faça login novamente.');
+    logout();
+  }
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* Limpa o estado "Carregando…" se o select estiver nesse estado */
+function ensureSelectReady(sel, defaultText) {
+  if (!sel) return;
+  if (sel.options.length === 1 && /Carregando|Loading/i.test(sel.options[0].text)) {
+    sel.innerHTML = `<option value="">${defaultText}</option>`;
+  }
+}
+
+/* ==========================================================
+   BUSCA DE LIVRO POR ISBN (local, com fallback)
+   ========================================================== */
+async function buscarLivrosPorIsbn(isbn) {
+  const code = String(isbn).trim();
+  if (!code) return [];
+  let livros = [];
+  try {
+    livros = await callAuth('listarLivros', code);
+  } catch (e) {
+    tratarErroSessao(e);
+    throw e;
+  }
+  let matches = (livros || []).filter(l => String(l.isbn || '').trim() === code);
+  if (matches.length) return matches;
+
+  try {
+    const todos = await callAuth('listarLivros', '');
+    return (todos || []).filter(l => String(l.isbn || '').trim() === code);
+  } catch (e) {
+    tratarErroSessao(e);
+    return [];
+  }
+}
+
+/* ==========================================================
+   BUSCA DE DADOS DO LIVRO NA INTERNET (Open Library + BrasilAPI)
+   ========================================================== */
+async function fetchJsonComTimeout(url, timeoutMs = 8000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const resp = await fetch(url, { signal: ctrl.signal });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return await resp.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function buscarOpenLibraryPorIsbn(isbn) {
+  const url = `https://openlibrary.org/search.json?isbn=${encodeURIComponent(isbn)}&limit=1`;
+  const data = await fetchJsonComTimeout(url);
+  if (!data || !data.docs || !data.docs.length) return null;
+  const doc = data.docs[0];
+  return {
+    titulo: doc.title || '',
+    autores: doc.author_name ? doc.author_name.join(', ') : '',
+    ano: doc.first_publish_year || '',
+    editora: doc.publisher ? doc.publisher[0] : '',
+    isbn: isbn,
+    capa: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : null,
+    fonte: 'Open Library'
+  };
+}
+
+async function buscarBrasilApiPorIsbn(isbn) {
+  const url = `https://brasilapi.com.br/api/isbn/v1/${encodeURIComponent(isbn)}`;
+  const data = await fetchJsonComTimeout(url);
+  if (!data || !data.title) return null;
+  return {
+    titulo: data.title || '',
+    autores: Array.isArray(data.authors) ? data.authors.join(', ') : (data.authors || ''),
+    ano: data.year || '',
+    editora: data.publisher || '',
+    isbn: isbn,
+    capa: data.cover_url || null,
+    fonte: 'BrasilAPI'
+  };
+}
+
+async function buscarOpenLibraryPorTitulo(termo) {
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(termo)}&limit=8&fields=title,author_name,first_publish_year,publisher,cover_i,isbn`;
+  const data = await fetchJsonComTimeout(url);
+  if (!data || !data.docs) return [];
+  return data.docs.slice(0, 8).map(doc => ({
+    titulo: doc.title || '',
+    autores: doc.author_name ? doc.author_name.join(', ') : '',
+    ano: doc.first_publish_year || '',
+    editora: doc.publisher ? doc.publisher[0] : '',
+    isbn: doc.isbn && doc.isbn.length ? doc.isbn[0] : '',
+    capa: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : null,
+    fonte: 'Open Library'
+  })).filter(r => r.titulo);
+}
+
+/* Detecta se o termo é um ISBN (10 ou 13 dígitos, tolera hífens e X) */
+function pareceIsbn(termo) {
+  const clean = String(termo).replace(/[\s-]/g, '');
+  return /^(\d{9}[\dXx]|\d{13})$/.test(clean);
+}
+
+/* Busca unificada: ISBN tenta as duas APIs; senão busca por título */
+async function buscarLivroOnline(termo) {
+  const t = String(termo || '').trim();
+  if (!t) return [];
+
+  const resultados = [];
+  const vistos = new Set();
+  const push = (r) => {
+    if (!r || !r.titulo) return;
+    const key = r.titulo.trim().toLowerCase();
+    if (vistos.has(key)) return;
+    vistos.add(key);
+    resultados.push(r);
+  };
+
+  if (pareceIsbn(t)) {
+    const isbn = t.replace(/[\s-]/g, '');
+    try { push(await buscarOpenLibraryPorIsbn(isbn)); } catch (e) { console.warn('OpenLibrary falhou:', e); }
+    try { push(await buscarBrasilApiPorIsbn(isbn)); } catch (e) { console.warn('BrasilAPI falhou:', e); }
+  } else {
+    try {
+      const rs = await buscarOpenLibraryPorTitulo(t);
+      rs.forEach(push);
+    } catch (e) { console.warn('OpenLibrary título falhou:', e); }
+  }
+
+  return resultados;
+}
+
+/* ==========================================================
+   PREVIEW DE CAPA NO CADASTRO
+   ========================================================== */
+function mostrarCapaPreview(dados) {
+  if (!dados) { limparCapaPreview(); return; }
+  const wrap = $('cad-capa-preview');
+  const img = $('cad-capa-img');
+
+  if (dados.capa) {
+    img.src = dados.capa;
+    img.style.display = '';
+    img.onerror = () => { img.style.display = 'none'; };
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+  }
+
+  $('cad-preview-titulo').textContent = dados.titulo || '';
+  const autorAno = [];
+  if (dados.autores) autorAno.push(dados.autores);
+  if (dados.ano) autorAno.push(String(dados.ano).substring(0, 4));
+  $('cad-preview-autor').textContent = autorAno.join(' · ');
+  $('cad-preview-fonte').textContent = dados.fonte || 'Internet';
+
+  wrap.classList.remove('hidden');
+}
+
+function limparCapaPreview() {
+  const wrap = $('cad-capa-preview');
+  if (!wrap) return;
+  wrap.classList.add('hidden');
+  const img = $('cad-capa-img');
+  if (img) { img.removeAttribute('src'); img.style.display = 'none'; }
+  ['cad-preview-titulo','cad-preview-autor','cad-preview-fonte'].forEach(id => {
+    const el = $(id); if (el) el.textContent = '';
+  });
+}
+
+/* Preenche o formulário de cadastro a partir de dados da internet */
+function preencherCadastroComResultado(dados) {
+  if (!dados) return;
+  if (dados.titulo) $('cad-titulo').value = dados.titulo;
+  if (dados.autores) $('cad-autor').value = dados.autores;
+  if (dados.ano) $('cad-ano').value = String(dados.ano).substring(0, 4);
+  if (dados.isbn) $('cad-isbn').value = dados.isbn;
+  mostrarCapaPreview(dados);
+  showMsg('msg-cad', `✅ Dados preenchidos (${dados.fonte}): ${dados.titulo}`, 'ok');
+
+  const card = $('card-cadastro-livro');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* Dispara a busca por ISBN no cadastro (chamada automaticamente após escanear) */
+async function preencherDadosLivroCadastro(isbn) {
+  const code = String(isbn || '').trim().replace(/[\s-]/g, '');
+  if (!code) return;
+  showMsg('msg-cad', '🔍 Buscando dados do livro na internet…', 'ok');
+  try {
+    const resultados = await buscarLivroOnline(code);
+    if (!resultados.length) {
+      showMsg('msg-cad', '⚠️ ISBN escaneado, mas não encontrado nas bases públicas. Preencha manualmente.', 'err');
+      return;
+    }
+    preencherCadastroComResultado(resultados[0]);
+  } catch (e) {
+    console.warn(e);
+    showMsg('msg-cad', '⚠️ Erro ao consultar a internet: ' + e.message, 'err');
+  }
+}
+
+/* Botão "Buscar online" no cadastro (manual) */
+function buscarDadosLivroManual() {
+  const isbn = $('cad-isbn').value.trim();
+  if (!isbn) {
+    showMsg('msg-cad', 'Digite ou escaneie o ISBN primeiro.', 'err');
+    return;
+  }
+  preencherDadosLivroCadastro(isbn);
+}
+
+/* ==========================================================
+   LEITOR DE CÓDIGO DE BARRAS
+   ========================================================== */
+let html5QrCode = null;
+let scannerTarget = null;
+let scannerAtivo = false;
+
+function abrirScanner(target) {
+  if (typeof Html5Qrcode === 'undefined') {
+    alert('Biblioteca de leitura de código de barras não carregou.\nVerifique sua conexão com a internet e recarregue a página.\nVocê ainda pode digitar o código manualmente.');
+    return;
+  }
+  scannerTarget = target;
+  $('scanner-modal').classList.remove('hidden');
+  $('scanner-reader').innerHTML = '';
+  $('scanner-manual-input').value = '';
+  setTimeout(() => $('scanner-manual-input').focus(), 100);
+
+  html5QrCode = new Html5Qrcode('scanner-reader', { verbose: false });
+
+  html5QrCode.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 280, height: 160 }, aspectRatio: 1.6 },
+    (decodedText) => processarCodigo(decodedText),
+    () => { /* ignora falhas de leitura */ }
+  ).then(() => {
+    scannerAtivo = true;
+  }).catch((err) => {
+    console.warn('Falha ao iniciar câmera:', err);
+    alert('Não foi possível iniciar a câmera.\nMotivo: ' + (err && err.message ? err.message : err) +
+          '\n\nVocê pode digitar o código manualmente no campo abaixo.');
+  });
+}
+
+async function fecharScanner() {
+  $('scanner-modal').classList.add('hidden');
+  if (html5QrCode) {
+    try {
+      if (scannerAtivo) await html5QrCode.stop();
+    } catch (_) { /* noop */ }
+    try { html5QrCode.clear(); } catch (_) {}
+    html5QrCode = null;
+  }
+  scannerAtivo = false;
+  scannerTarget = null;
+}
+
+function processarCodigo(codigo) {
+  const code = String(codigo || '').trim();
+  if (!code) return;
+  const target = scannerTarget;
+
+  if (target === 'isbn') {
+    $('cad-isbn').value = code;
+    fecharScanner().then(() => preencherDadosLivroCadastro(code));
+  } else if (target === 'busca') {
+    $('busca-termo').value = code;
+    fecharScanner().then(() => buscarCatalogo());
+  } else if (target === 'retirada') {
+    fecharScanner().then(() => scanRetirada(code));
+  } else if (target === 'devolucao') {
+    fecharScanner().then(() => scanDevolucao(code));
+  } else {
+    fecharScanner();
+  }
+}
+
+/* ==========================================================
+   LOGIN
+   ========================================================== */
+$('login-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const u = $('login-user').value.trim();
+  const p = $('login-pass').value;
+  showMsg('login-msg', '', '');
+  $('btn-login').disabled = true;
+  try {
+    const r = await callGAS('login', u, p);
+    if (!r.sucesso) { showMsg('login-msg', r.mensagem, 'err'); return; }
+    TOKEN = r.token;
+    USUARIO = r.usuario;
+    $('user-name').textContent = r.usuario.nome;
+    $('nav-usuarios').classList.toggle('hidden', r.usuario.perfil !== 'admin');
+    $('login-screen').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    carregarDashboard();
+    carregarTurmas();
+  } catch (e) {
+    showMsg('login-msg', 'Erro: ' + e.message, 'err');
+  } finally {
+    $('btn-login').disabled = false;
+  }
+});
+
+async function logout() {
+  try { if (TOKEN) await callGAS('logout', TOKEN); } catch(_) {}
+  TOKEN = null; USUARIO = null;
+  _livroDispCache = {}; _empCache = {}; _livroPorTitulo = {};
+  $('app').classList.add('hidden');
+  $('login-screen').classList.remove('hidden');
+  $('login-pass').value = '';
+}
+
+/* ==========================================================
+   NAVEGAÇÃO
+   ========================================================== */
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('panel-' + btn.dataset.panel).classList.add('active');
+
+    switch (btn.dataset.panel) {
+      case 'dashboard':    carregarDashboard();       break;
+      case 'catalogo':     buscarCatalogo();          break;
+      case 'retirada':     carregarLivrosDisponiveis(); carregarTurmas(); break;
+      case 'devolucao':    carregarEmprestimosAtivos(); carregarHistorico(); break;
+      case 'baixa':        carregarParaBaixa();       break;
+      case 'alunos':       carregarTurmas();          break;
+      case 'bibliotecarios': carregarBibliotecarios(); break;
+      case 'usuarios':     carregarUsuarios();        break;
+    }
+  });
+});
+
+/* ==========================================================
+   DASHBOARD
+   ========================================================== */
+async function carregarDashboard() {
+  try {
+    const d = await callAuth('dashboard');
+    $('stat-livros').textContent = d.totalLivros;
+    $('stat-livros-sub').textContent =
+      d.livrosDisponiveis + ' disp. · ' +
+      d.livrosEmprestados + ' emp. · ' +
+      d.livrosBaixados + ' baix.';
+    $('stat-total-emp').textContent = d.totalEmprestimos;
+    $('stat-ativos').textContent = d.emprestimosAtivos;
+    $('stat-atrasados').textContent = d.totalAtrasados;
+
+    let html = '<table><thead><tr>' +
+      '<th>Aluno</th><th>Turma</th><th>Livro</th>' +
+      '<th>Prazo</th><th>Atraso</th></tr></thead><tbody>';
+
+    if (!d.atrasados.length) {
+      html += '<tr><td colspan="5" class="empty">🎉 Nenhum livro em atraso.</td></tr>';
+    } else {
+      d.atrasados.forEach(a => {
+        html += `<tr>
+          <td><strong>${escapeHtml(a.alunoNome)}</strong></td>
+          <td><span class="badge badge-turma">${escapeHtml(a.turma)}</span></td>
+          <td>${escapeHtml(a.titulo)}</td>
+          <td>${escapeHtml(a.prazo)}</td>
+          <td><span class="badge badge-atraso">${a.diasAtraso} dia(s)</span></td>
+        </tr>`;
+      });
+    }
+    html += '</tbody></table>';
+    $('tabela-atrasados').innerHTML = html;
+  } catch (e) { tratarErroSessao(e); }
+}
+
+/* ==========================================================
+   TURMAS / ALUNOS
+   ========================================================== */
+async function carregarTurmas() {
+  try {
+    const turmas = await callAuth('listarTurmas');
+    ['ret-turma','consulta-turma','aluno-turma'].forEach(id => {
+      const sel = $(id);
+      if (!sel) return;
+      const atual = sel.value;
+      sel.innerHTML = '<option value="">Selecione…</option>' +
+        turmas.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+      if (atual) sel.value = atual;
+    });
+  } catch (e) { tratarErroSessao(e); }
+}
+
+async function carregarAlunosDaTurma() {
+  const turma = $('ret-turma').value;
+  const sel = $('ret-aluno');
+  if (!turma) {
+    sel.innerHTML = '<option value="">Selecione a turma primeiro…</option>';
+    return;
+  }
+  try {
+    const alunos = await callAuth('listarAlunosPorTurma', turma);
+    if (!alunos.length) {
+      sel.innerHTML = '<option value="">Nenhum aluno nesta turma</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">Selecione o aluno…</option>' +
+      alunos.map(a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`).join('');
+  } catch (e) { tratarErroSessao(e); }
+}
+
+async function cadastrarAluno() {
+  const dados = {
+    nome: $('aluno-nome').value.trim(),
+    turma: $('aluno-turma').value
+  };
+  if (!dados.nome || !dados.turma)
+    return showMsg('msg-aluno', 'Preencha nome e turma.', 'err');
+  $('btn-aluno').disabled = true;
+  try {
+    const r = await callAuth('cadastrarAluno', dados);
+    showMsg('msg-aluno', r.mensagem, r.sucesso ? 'ok' : 'err');
+    if (r.sucesso) {
+      $('aluno-nome').value = '';
+      carregarAlunosConsulta();
+    }
+  } catch (e) { tratarErroSessao(e); showMsg('msg-aluno', e.message, 'err'); }
+  finally { $('btn-aluno').disabled = false; }
+}
+
+async function carregarAlunosConsulta() {
+  const turma = $('consulta-turma').value;
+  const wrap = $('tabela-alunos-consulta');
+  if (!turma) {
+    wrap.innerHTML = '<div class="empty">Selecione uma turma para listar os alunos.</div>';
+    return;
+  }
+  try {
+    const alunos = await callAuth('listarAlunosPorTurma', turma);
+    if (!alunos.length) {
+      wrap.innerHTML = '<div class="empty">Nenhum aluno cadastrado nesta turma.</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Nome</th><th>Turma</th><th></th></tr></thead><tbody>';
+    alunos.forEach(a => {
+      html += `<tr>
+        <td>${a.id}</td>
+        <td><strong>${escapeHtml(a.nome)}</strong></td>
+        <td><span class="badge badge-turma">${escapeHtml(a.turma)}</span></td>
+        <td><button class="btn btn-danger btn-sm" onclick="excluirAluno(${a.id})">Excluir</button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  } catch (e) { tratarErroSessao(e); }
+}
+
+async function excluirAluno(id) {
+  if (!confirm('Excluir este aluno? Empréstimos antigos manterão o nome.')) return;
+  try {
+    const r = await callAuth('excluirAluno', id);
+    if (r.sucesso) carregarAlunosConsulta();
+    else alert(r.mensagem);
+  } catch (e) { tratarErroSessao(e); }
+}
+
+/* ==========================================================
+   CATÁLOGO
+   ========================================================== */
+async function buscarCatalogo() {
+  const termo = $('busca-termo').value.trim();
+  try {
+    const livros = await callAuth('listarLivros', termo);
+    let html = '<table><thead><tr><th>ID</th><th>Título</th><th>Autor</th><th>ISBN</th><th>Status</th></tr></thead><tbody>';
+    if (!livros.length) {
+      if (termo) {
+        html += `<tr><td colspan="5" class="empty">
+          Nenhum livro encontrado no acervo para "${escapeHtml(termo)}".<br><br>
+          <button class="btn btn-primary btn-sm" id="btn-busca-online">🔍 Buscar na internet</button>
+        </td></tr>`;
+      } else {
+        html += '<tr><td colspan="5" class="empty">Nenhum livro encontrado.</td></tr>';
+      }
+    } else {
+      livros.forEach(l => {
+        html += `<tr>
+          <td>${l.id}</td>
+          <td><strong>${escapeHtml(l.titulo)}</strong></td>
+          <td>${escapeHtml(l.autor)}</td>
+          <td>${escapeHtml(l.isbn || '—')}</td>
+          <td>${badge(l.status)}</td>
+        </tr>`;
+      });
+    }
+    html += '</tbody></table>';
+    $('tabela-catalogo').innerHTML = html;
+
+    const btnOnline = $('btn-busca-online');
+    if (btnOnline) btnOnline.addEventListener('click', () => buscarOnlineNoCatalogo(termo));
+  } catch (e) { tratarErroSessao(e); }
+}
+
+/* Busca na internet a partir do catálogo (quando nada foi achado localmente) */
+async function buscarOnlineNoCatalogo(termo) {
+  if (!termo) return;
+  $('tabela-catalogo').innerHTML =
+    '<div class="empty">🔍 Consultando bases públicas (Open Library / BrasilAPI)…</div>';
+  try {
+    const resultados = await buscarLivroOnline(termo);
+    if (!resultados.length) {
+      $('tabela-catalogo').innerHTML =
+        `<div class="empty">⚠️ Nenhum resultado encontrado na internet para "${escapeHtml(termo)}".<br><br>
+         <button class="btn btn-ghost btn-sm" onclick="buscarCatalogo()">Voltar</button></div>`;
+      return;
+    }
+    exibirResultadosOnline(resultados);
+  } catch (e) {
+    console.warn(e);
+    $('tabela-catalogo').innerHTML =
+      `<div class="empty">⚠️ Erro ao consultar a internet: ${escapeHtml(e.message)}<br><br>
+       <button class="btn btn-ghost btn-sm" onclick="buscarCatalogo()">Voltar</button></div>`;
+  }
+}
+
+function exibirResultadosOnline(resultados) {
+  let html = '<div class="empty" style="text-align:left;padding:18px 14px 6px">' +
+    `<p style="margin-bottom:12px;font-weight:600;color:#0f172a">📚 ${resultados.length} resultado(s) encontrado(s) na internet. Clique em "Usar este" para preencher o cadastro:</p>` +
+    '<div class="resultados-online">';
+  resultados.forEach((r, i) => {
+    html += `<div class="resultado-item">
+      ${r.capa ? `<img src="${escapeHtml(r.capa)}" alt="" onerror="this.style.display='none'">` : '<div style="width:50px;height:75px;background:#e2e8f0;border-radius:4px;flex-shrink:0"></div>'}
+      <div class="info">
+        <div class="titulo">${escapeHtml(r.titulo)}</div>
+        <div class="sub">${escapeHtml(r.autores || '—')}${r.ano ? ' · ' + escapeHtml(String(r.ano)) : ''}</div>
+        <div class="isbn">ISBN: ${escapeHtml(r.isbn || '—')} <span class="badge badge-fonte">${escapeHtml(r.fonte)}</span></div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-idx="${i}">Usar este</button>
+    </div>`;
+  });
+  html += '</div>' +
+    '<div style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="buscarCatalogo()">Voltar</button></div>' +
+    '</div>';
+  $('tabela-catalogo').innerHTML = html;
+
+  document.querySelectorAll('#tabela-catalogo [data-idx]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      preencherCadastroComResultado(resultados[idx]);
+    });
+  });
+}
+
+async function cadastrarLivro() {
+  const dados = {
+    titulo:      $('cad-titulo').value.trim(),
+    autor:       $('cad-autor').value.trim(),
+    isbn:        $('cad-isbn').value.trim(),
+    ano:         $('cad-ano').value,
+    localizacao: $('cad-local').value.trim()
+  };
+  if (!dados.titulo || !dados.autor)
+    return showMsg('msg-cad', 'Preencha Título e Autor.', 'err');
+  $('btn-cad').disabled = true;
+  try {
+    const r = await callAuth('cadastrarLivro', dados);
+    showMsg('msg-cad', r.mensagem, r.sucesso ? 'ok' : 'err');
+    if (r.sucesso) {
+      ['cad-titulo','cad-autor','cad-isbn','cad-ano','cad-local'].forEach(i => $(i).value = '');
+      limparCapaPreview();
+      buscarCatalogo();
+    }
+  } catch (e) { tratarErroSessao(e); showMsg('msg-cad', e.message, 'err'); }
+  finally { $('btn-cad').disabled = false; }
+}
+
+/* ==========================================================
+   RETIRADA
+   ========================================================== */
+async function carregarLivrosDisponiveis() {
+  try {
+    const livros = await callAuth('listarLivrosDisponiveis');
+    _livroDispCache = {};
+    livros.forEach(l => { _livroDispCache[l.id] = l; });
+
+    const sel = $('ret-livro');
+    sel.innerHTML = '<option value="">Selecione um livro…</option>' +
+      livros.map(l => `<option value="${l.id}">${escapeHtml(l.titulo)} — ${escapeHtml(l.autor)} (${l.id})</option>`).join('');
+    $('ret-info').classList.add('hidden');
+  } catch (e) { tratarErroSessao(e); }
+}
+
+function mostrarInfoRetirada(livro) {
+  if (!livro) return;
+  const info = $('ret-info');
+  const local = (livro.localizacao != null && livro.localizacao !== '') ? livro.localizacao : '—';
+  info.innerHTML = `
+    <div class="info-row"><strong>📚 Título:</strong> ${escapeHtml(livro.titulo)}</div>
+    <div class="info-row"><strong>✍️ Autor:</strong> ${escapeHtml(livro.autor)}</div>
+    <div class="info-row"><strong>🔖 ISBN:</strong> ${escapeHtml(livro.isbn || '—')}</div>
+    <div class="info-row"><strong>📍 Localização:</strong> ${escapeHtml(local)}</div>
+    <div class="info-row"><strong>📦 Status:</strong> ${badge(livro.status)}</div>
+  `;
+  info.classList.remove('hidden');
+}
+
+function onRetLivroChange() {
+  const id = $('ret-livro').value;
+  const info = $('ret-info');
+  if (!id) { info.classList.add('hidden'); return; }
+  const livro = _livroDispCache[id];
+  if (!livro) { info.classList.add('hidden'); return; }
+  mostrarInfoRetirada(livro);
+}
+
+async function scanRetirada(isbn) {
+  try {
+    const candidatos = await buscarLivrosPorIsbn(isbn);
+    if (!candidatos.length) {
+      showMsg('msg-ret', `❌ Nenhum livro encontrado com o código "${isbn}".`, 'err');
+      return;
+    }
+    const disponiveis = candidatos.filter(l => l.status === 'Disponível');
+    if (!disponiveis.length) {
+      showMsg('msg-ret', `⚠️ Livro "${candidatos[0].titulo}" encontrado, mas não está disponível (status: ${candidatos[0].status}).`, 'err');
+      return;
+    }
+
+    const sel = $('ret-livro');
+    ensureSelectReady(sel, 'Selecione um livro…');
+
+    const idsExistentes = new Set(Array.from(sel.options).map(o => String(o.value)));
+    disponiveis.forEach(livro => {
+      _livroDispCache[livro.id] = livro;
+      if (!idsExistentes.has(String(livro.id))) {
+        sel.insertAdjacentHTML('beforeend',
+          `<option value="${livro.id}">${escapeHtml(livro.titulo)} — ${escapeHtml(livro.autor)} (${livro.id})</option>`);
+      }
+    });
+    sel.value = disponiveis[0].id;
+    mostrarInfoRetirada(disponiveis[0]);
+
+    if (disponiveis.length === 1) {
+      showMsg('msg-ret', `✅ Livro selecionado: ${disponiveis[0].titulo}`, 'ok');
+    } else {
+      showMsg('msg-ret', `✅ ${disponiveis.length} exemplares encontrados. Confirme qual será retirado.`, 'ok');
+    }
+  } catch (e) {
+    tratarErroSessao(e);
+    showMsg('msg-ret', e.message, 'err');
+  }
+}
+
+async function realizarRetirada() {
+  const livroId = $('ret-livro').value;
+  const alunoId = $('ret-aluno').value;
+  const dias = $('ret-dias').value;
+  if (!livroId || !alunoId)
+    return showMsg('msg-ret', 'Selecione o livro e o aluno.', 'err');
+  $('btn-ret').disabled = true;
+  try {
+    const r = await callAuth('realizarRetirada', livroId, alunoId, dias);
+    showMsg('msg-ret', r.mensagem, r.sucesso ? 'ok' : 'err');
+    if (r.sucesso) {
+      $('ret-aluno').value = '';
+      $('ret-info').classList.add('hidden');
+      carregarLivrosDisponiveis();
+    }
+  } catch (e) { tratarErroSessao(e); showMsg('msg-ret', e.message, 'err'); }
+  finally { $('btn-ret').disabled = false; }
+}
+
+/* ==========================================================
+   DEVOLUÇÃO
+   ========================================================== */
+async function carregarEmprestimosAtivos() {
+  try {
+    const emps = await callAuth('listarEmprestimosAtivos');
+    _empCache = {};
+    emps.forEach(e => { _empCache[e.id] = e; });
+
+    const sel = $('dev-emprestimo');
+    if (!emps.length) {
+      sel.innerHTML = '<option value="">Nenhum empréstimo ativo</option>';
+      $('dev-info').classList.add('hidden');
+      return;
+    }
+    sel.innerHTML = '<option value="">Selecione um empréstimo…</option>' +
+      emps.map(e => {
+        const flag = e.diasAtraso > 0 ? ` ⚠️ ${e.diasAtraso}d atraso` : '';
+        return `<option value="${e.id}">${escapeHtml(e.titulo)} — ${escapeHtml(e.alunoNome)} (${escapeHtml(e.turma)}) — Prazo: ${escapeHtml(e.prazo)}${flag}</option>`;
+      }).join('');
+    $('dev-info').classList.add('hidden');
+  } catch (e) { tratarErroSessao(e); }
+}
+
+function mostrarInfoDevolucao(livro, emp) {
+  if (!emp) return;
+  const info = $('dev-info');
+  const atraso = emp.diasAtraso > 0
+    ? `<span class="badge badge-atraso">${emp.diasAtraso} dia(s) de atraso</span>`
+    : `<span class="badge badge-disponivel">No prazo</span>`;
+
+  const livroHtml = livro ? `
+    <div class="info-row"><strong>📚 Livro:</strong> ${escapeHtml(livro.titulo)}</div>
+    <div class="info-row"><strong>✍️ Autor:</strong> ${escapeHtml(livro.autor)}</div>
+    <div class="info-row"><strong>🔖 ISBN:</strong> ${escapeHtml(livro.isbn || '—')}</div>
+  ` : `
+    <div class="info-row"><strong>📚 Livro:</strong> ${escapeHtml(emp.titulo)}</div>
+  `;
+
+  info.innerHTML = livroHtml + `
+    <div class="info-row"><strong>👤 Aluno:</strong> ${escapeHtml(emp.alunoNome)}</div>
+    <div class="info-row"><strong>🎓 Turma:</strong> ${escapeHtml(emp.turma)}</div>
+    <div class="info-row"><strong>📅 Prazo:</strong> ${escapeHtml(emp.prazo)} ${atraso}</div>
+  `;
+  info.classList.remove('hidden');
+}
+
+function onDevEmprestimoChange() {
+  const id = $('dev-emprestimo').value;
+  const info = $('dev-info');
+  if (!id) { info.classList.add('hidden'); return; }
+  const emp = _empCache[id];
+  if (!emp) { info.classList.add('hidden'); return; }
+  const livro = _livroPorTitulo[String(emp.titulo).trim().toLowerCase()] || null;
+  mostrarInfoDevolucao(livro, emp);
+}
+
+async function scanDevolucao(isbn) {
+  try {
+    const candidatos = await buscarLivrosPorIsbn(isbn);
+    if (!candidatos.length) {
+      showMsg('msg-dev', `❌ Nenhum livro encontrado com o código "${isbn}".`, 'err');
+      return;
+    }
+
+    const emps = await callAuth('listarEmprestimosAtivos');
+    _empCache = {};
+    emps.forEach(e => { _empCache[e.id] = e; });
+
+    const titulosCandidatos = new Set(candidatos.map(l => String(l.titulo).trim().toLowerCase()));
+    const matches = emps.filter(e => titulosCandidatos.has(String(e.titulo).trim().toLowerCase()));
+
+    if (!matches.length) {
+      showMsg('msg-dev', `⚠️ Nenhum empréstimo ativo encontrado para "${candidatos[0].titulo}".`, 'err');
+      return;
+    }
+
+    candidatos.forEach(l => {
+      _livroPorTitulo[String(l.titulo).trim().toLowerCase()] = l;
+    });
+
+    const sel = $('dev-emprestimo');
+    ensureSelectReady(sel, 'Selecione um empréstimo…');
+
+    const idsExistentes = new Set(Array.from(sel.options).map(o => String(o.value)));
+    matches.forEach(e => {
+      if (!idsExistentes.has(String(e.id))) {
+        const flag = e.diasAtraso > 0 ? ` ⚠️ ${e.diasAtraso}d atraso` : '';
+        sel.insertAdjacentHTML('beforeend',
+          `<option value="${e.id}">${escapeHtml(e.titulo)} — ${escapeHtml(e.alunoNome)} (${escapeHtml(e.turma)}) — Prazo: ${escapeHtml(e.prazo)}${flag}</option>`);
+      }
+    });
+    sel.value = matches[0].id;
+
+    const livroEmp = candidatos.find(l =>
+      String(l.titulo).trim().toLowerCase() === String(matches[0].titulo).trim().toLowerCase()
+    ) || candidatos[0];
+
+    mostrarInfoDevolucao(livroEmp, matches[0]);
+
+    if (matches.length === 1) {
+      showMsg('msg-dev', `✅ Empréstimo localizado: ${matches[0].alunoNome} — ${livroEmp.titulo}`, 'ok');
+    } else {
+      showMsg('msg-dev', `✅ ${matches.length} empréstimos encontrados. Confirme qual será devolvido.`, 'ok');
+    }
+  } catch (e) {
+    tratarErroSessao(e);
+    showMsg('msg-dev', e.message, 'err');
+  }
+}
+
+async function realizarDevolucao() {
+  const id = $('dev-emprestimo').value;
+  if (!id) return showMsg('msg-dev', 'Selecione um empréstimo.', 'err');
+  $('btn-dev').disabled = true;
+  try {
+    const r = await callAuth('realizarDevolucao', id);
+    showMsg('msg-dev', r.mensagem, r.sucesso ? 'ok' : 'err');
+    if (r.sucesso) {
+      $('dev-info').classList.add('hidden');
+      carregarEmprestimosAtivos();
+      carregarHistorico();
+    }
+  } catch (e) { tratarErroSessao(e); showMsg('msg-dev', e.message, 'err'); }
+  finally { $('btn-dev').disabled = false; }
+}
+
+async function carregarHistorico() {
+  try {
+    const emps = await callAuth('listarEmprestimos');
+    let html = '<table><thead><tr>' +
+      '<th>#</th><th>Aluno</th><th>Turma</th><th>Livro</th>' +
+      '<th>Retirada</th><th>Prazo</th><th>Devolução</th><th>Status</th>' +
+      '</tr></thead><tbody>';
+    if (!emps.length) {
+      html += '<tr><td colspan="8" class="empty">Sem empréstimos registrados.</td></tr>';
+    } else {
+      emps.sort((a,b) => b.id - a.id).forEach(e => {
+        const badgeStatus = e.status === 'Ativo'
+          ? (e.diasAtraso > 0
+              ? `<span class="badge badge-emprestado">Ativo</span><span class="badge badge-atraso">${e.diasAtraso}d</span>`
+              : `<span class="badge badge-emprestado">Ativo</span>`)
+          : `<span class="badge badge-disponivel">Devolvido</span>`;
+        html += `<tr>
+          <td>${e.id}</td>
+          <td>${escapeHtml(e.alunoNome || '—')}</td>
+          <td>${e.turma ? `<span class="badge badge-turma">${escapeHtml(e.turma)}</span>` : '—'}</td>
+          <td>${escapeHtml(e.titulo)}</td>
+          <td>${escapeHtml(e.dataRetirada)}</td>
+          <td>${escapeHtml(e.prazo)}</td>
+          <td>${escapeHtml(e.dataDevolucao || '—')}</td>
+          <td>${badgeStatus}</td>
+        </tr>`;
+      });
+    }
+    html += '</tbody></table>';
+    $('tabela-historico').innerHTML = html;
+  } catch (e) { tratarErroSessao(e); }
+}
+
+/* ==========================================================
+   BAIXA
+   ========================================================== */
+async function carregarParaBaixa() {
+  try {
+    const [livros, bibs] = await Promise.all([
+      callAuth('listarLivros', ''),
+      callAuth('listarBibliotecarios')
+    ]);
+    $('baixa-livro').innerHTML = '<option value="">Selecione um livro…</option>' +
+      livros.filter(l => l.status !== 'Emprestado' && l.status !== 'Baixado')
+        .map(l => `<option value="${l.id}">${escapeHtml(l.titulo)} (${escapeHtml(l.status)})</option>`).join('');
+    $('baixa-bib').innerHTML = '<option value="">Selecione…</option>' +
+      bibs.map(b => `<option value="${escapeHtml(b.nome)}">${escapeHtml(b.nome)}</option>`).join('');
+  } catch (e) { tratarErroSessao(e); }
+}
+
+async function executarBaixa() {
+  const id = $('baixa-livro').value;
+  const motivo = $('baixa-motivo').value;
+  const bib = $('baixa-bib').value;
+  if (!id) return showMsg('msg-baixa', 'Selecione um livro.', 'err');
+  if (!confirm('Confirmar baixa deste livro? Ação irreversível.')) return;
+  $('btn-baixa').disabled = true;
+  try {
+    const r = await callAuth('darBaixa', id, motivo, bib);
+    showMsg('msg-baixa', r.mensagem, r.sucesso ? 'ok' : 'err');
+    if (r.sucesso) carregarParaBaixa();
+  } catch (e) { tratarErroSessao(e); showMsg('msg-baixa', e.message, 'err'); }
+  finally { $('btn-baixa').disabled = false; }
+}
+
+/* ==========================================================
+   BIBLIOTECÁRIOS
+   ========================================================== */
+async function cadastrarBibliotecario() {
+  const dados = {
+    nome:     $('bib-nome').value.trim(),
+    email:    $('bib-email').value.trim(),
+    telefone: $('bib-tel').value.trim()
+  };
+  if (!dados.nome) return showMsg('msg-bib', 'Informe o nome.', 'err');
+  $('btn-bib').disabled = true;
+  try {
+    const r = await callAuth('cadastrarBibliotecario', dados);
+    showMsg('msg-bib', r.mensagem, r.sucesso ? 'ok' : 'err');
+    if (r.sucesso) {
+      ['bib-nome','bib-email','bib-tel'].forEach(i => $(i).value = '');
+      carregarBibliotecarios();
+    }
+  } catch (e) { tratarErroSessao(e); showMsg('msg-bib', e.message, 'err'); }
+  finally { $('btn-bib').disabled = false; }
+}
+
+async function carregarBibliotecarios() {
+  try {
+    const bibs = await callAuth('listarBibliotecarios');
+    let html = '<table><thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th></tr></thead><tbody>';
+    if (!bibs.length) html += '<tr><td colspan="4" class="empty">Nenhum bibliotecário cadastrado.</td></tr>';
+    else bibs.forEach(b => html += `<tr><td>${b.id}</td><td><strong>${escapeHtml(b.nome)}</strong></td><td>${escapeHtml(b.email||'—')}</td><td>${escapeHtml(b.telefone||'—')}</td></tr>`);
+    html += '</tbody></table>';
+    $('tabela-bibs').innerHTML = html;
+  } catch (e) { tratarErroSessao(e); }
+}
+
+/* ==========================================================
+   USUÁRIOS
+   ========================================================== */
+async function cadastrarUsuario() {
+  const dados = {
+    nome:    $('usr-nome').value.trim(),
+    usuario: $('usr-user').value.trim(),
+    senha:   $('usr-pass').value,
+    perfil:  $('usr-perfil').value
+  };
+  if (!dados.nome || !dados.usuario || !dados.senha)
+    return showMsg('msg-usr', 'Preencha todos os campos obrigatórios.', 'err');
+  $('btn-usr').disabled = true;
+  try {
+    const r = await callAuth('cadastrarUsuario', dados);
+    showMsg('msg-usr', r.mensagem, r.sucesso ? 'ok' : 'err');
+    if (r.sucesso) {
+      ['usr-nome','usr-user','usr-pass'].forEach(i => $(i).value = '');
+      carregarUsuarios();
+    }
+  } catch (e) { tratarErroSessao(e); showMsg('msg-usr', e.message, 'err'); }
+  finally { $('btn-usr').disabled = false; }
+}
+
+async function carregarUsuarios() {
+  try {
+    const us = await callAuth('listarUsuarios');
+    let html = '<table><thead><tr><th>ID</th><th>Nome</th><th>Usuário</th><th>Perfil</th></tr></thead><tbody>';
+    if (!us.length) html += '<tr><td colspan="4" class="empty">Nenhum usuário.</td></tr>';
+    else us.forEach(u => html += `<tr><td>${u.id}</td><td><strong>${escapeHtml(u.nome)}</strong></td><td>${escapeHtml(u.usuario)}</td><td>${escapeHtml(u.perfil)}</td></tr>`);
+    html += '</tbody></table>';
+    $('tabela-usuarios').innerHTML = html;
+  } catch (e) { tratarErroSessao(e); }
+}
+
+/* ==========================================================
+   FECHAR SCANNER — ESC e clique fora
+   ========================================================== */
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && !$('scanner-modal').classList.contains('hidden')) {
+    fecharScanner();
+  }
+});
+$('scanner-modal').addEventListener('click', (ev) => {
+  if (ev.target === $('scanner-modal')) fecharScanner();
+});
+</script>
+</body>
+</html>
