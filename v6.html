@@ -69,59 +69,9 @@ input,select{font-family:inherit}
 .user-info span{font-size:13px;font-weight:600;color:var(--text)}
 .user-info span::before{content:'👤 '}
 
-/* ================= LAYOUT PRINCIPAL ================= */
-.layout{
-  flex:1;
-  width:100%;
-  max-width:1200px;
-  margin:0 auto;
-  padding:28px 24px;
-  display:grid;
-  grid-template-columns:1fr;
-  gap:20px;
-}
+.main{flex:1;max-width:1400px;width:100%;margin:0 auto;padding:28px 24px}
 
-.sidebar{
-  display:none;
-  min-width:0;
-}
-.sidebar.active{
-  display:block;
-}
-.main{
-  display:none;
-  min-width:0;
-}
-.main.active{
-  display:block;
-}
-
-/* ================= DESKTOP ================= */
-@media (min-width:1024px){
-  .layout{
-    grid-template-columns:320px 1fr;
-    gap:24px;
-  }
-  .sidebar{
-    display:block;
-    position:sticky;
-    top:80px;
-    align-self:start;
-    max-height:calc(100vh - 100px);
-    overflow-y:auto;
-  }
-  .main{
-    display:block;
-  }
-  /* No desktop o dashboard é sempre visível: escondemos o botão da nav */
-  .nav-btn[data-panel="dashboard"]{
-    display:none;
-  }
-  .sidebar::-webkit-scrollbar{width:6px}
-  .sidebar::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
-  .sidebar::-webkit-scrollbar-thumb:hover{background:#94a3b8}
-}
-
+/* Painel visível */
 .panel{display:none;animation:fadeIn .2s}
 .panel.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -135,8 +85,45 @@ input,select{font-family:inherit}
 @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}.topbar{padding:0 12px;gap:12px;flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px}.nav{order:3;flex-basis:100%;justify-content:flex-start}.input-with-btn{flex-direction:column}}
 @media(max-width:900px){.grid-3{grid-template-columns:1fr 1fr}}
 
-/* Dashboard stats */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+/* ===================== LAYOUT DESKTOP COM DASHBOARD À ESQUERDA ===================== */
+.workspace{display:flex;flex-direction:column;gap:0}
+.workspace .content{flex:1;min-width:0}
+
+@media(min-width:1024px){
+  .workspace{
+    display:grid;
+    grid-template-columns:340px minmax(0,1fr);
+    gap:20px;
+    align-items:start;
+  }
+
+  /* Dashboard vira coluna esquerda fixa no desktop */
+  #panel-dashboard{
+    display:block;              /* sempre visível no desktop */
+    position:sticky;
+    top:88px;                   /* abaixo do topbar sticky (64px) + folga */
+    align-self:start;
+    max-height:calc(100vh - 100px);
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  #panel-dashboard::-webkit-scrollbar{width:6px}
+  #panel-dashboard::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+
+  /* Painéis de conteúdo nunca escondem o dashboard no desktop */
+  .panel.active:not(#panel-dashboard){display:block}
+
+  /* Por padrão, sem aba selecionada o dashboard é o único visível */
+  .workspace:not(.has-content) #panel-dashboard{grid-column:1 / -1;max-height:none;position:static;overflow:visible}
+
+  /* Quando há outra aba selecionada, ajusta layout */
+  .workspace.has-content #panel-dashboard{grid-column:1}
+  .workspace.has-content .panel.active:not(#panel-dashboard){grid-column:2}
+}
+
+/* ===================== ESTATÍSTICAS ===================== */
+.stats-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:20px}
+@media(max-width:1023px){.stats-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
 .stat-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-left:4px solid var(--primary)}
 .stat-card.s-success{border-left-color:var(--success)}
 .stat-card.s-warning{border-left-color:var(--warning)}
@@ -144,41 +131,6 @@ input,select{font-family:inherit}
 .stat-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
 .stat-value{font-size:32px;font-weight:800;color:var(--text);line-height:1}
 .stat-sub{font-size:12px;color:var(--muted);margin-top:8px}
-
-/* Sidebar dashboard */
-.sidebar .stats-grid{
-  grid-template-columns:1fr;
-  gap:12px;
-  margin-bottom:0;
-}
-.sidebar .stat-card{
-  padding:16px;
-}
-.sidebar .stat-value{
-  font-size:26px;
-}
-.sidebar .stat-label{
-  margin-bottom:6px;
-}
-
-/* Lista de atrasados (sidebar) */
-.atraso-list{
-  border:1px solid var(--border);
-  border-radius:10px;
-  overflow:hidden;
-  background:#fff;
-}
-.atraso-item{
-  padding:12px 14px;
-  border-bottom:1px solid var(--border);
-  font-size:13px;
-}
-.atraso-item:last-child{border-bottom:none}
-.atraso-header{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
-.atraso-header strong{color:var(--text);font-size:13px}
-.atraso-livro{color:var(--muted);font-size:12px;margin-bottom:6px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.atraso-footer{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted)}
-.atraso-list .empty{padding:24px 14px;font-size:13px}
 
 .search-bar{display:flex;gap:10px;margin-bottom:18px}
 .search-bar input{flex:1;min-width:0}
@@ -253,7 +205,7 @@ tbody tr:hover td{background:#f8fafc}
 <div id="loading-overlay" class="loading-overlay hidden"><div class="spinner"></div></div>
 
 <!-- LOGIN -->
-<div id="login-screen" class="login-screen">
+<div id="login-screen" class="login-screen hidden">
   <div class="login-card">
     <div class="logo">📚</div>
     <h1>Biblioteca</h1>
@@ -293,12 +245,11 @@ tbody tr:hover td{background:#f8fafc}
     </div>
   </header>
 
-  <div class="layout">
+  <main class="main">
+    <div class="workspace" id="workspace">
 
-    <!-- ============ SIDEBAR (DASHBOARD) ============ -->
-    <aside class="sidebar" id="sidebar">
-      <div class="card">
-        <h2>Resumo</h2>
+      <!-- ============ DASHBOARD (coluna esquerda no desktop) ============ -->
+      <section class="panel active" id="panel-dashboard">
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-label">Livros cadastrados</div>
@@ -321,19 +272,15 @@ tbody tr:hover td{background:#f8fafc}
             <div class="stat-sub">fora do prazo</div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <h2>Devolução em atraso</h2>
-        <div id="tabela-atrasados" class="atraso-list"></div>
-      </div>
-    </aside>
+        <div class="card">
+          <h2>Alunos com devolução em atraso</h2>
+          <div id="tabela-atrasados" class="table-wrap"></div>
+        </div>
+      </section>
 
-    <!-- ============ CONTEÚDO CENTRAL (PAINÉIS) ============ -->
-    <main class="main" id="main-content">
-
-      <!-- CATÁLOGO -->
-      <section class="panel active" id="panel-catalogo">
+      <!-- ============ CATÁLOGO ============ -->
+      <section class="panel" id="panel-catalogo">
         <div class="card">
           <h2>Acervo</h2>
           <div class="search-bar">
@@ -373,7 +320,7 @@ tbody tr:hover td{background:#f8fafc}
         </div>
       </section>
 
-      <!-- RETIRADA -->
+      <!-- ============ RETIRADA ============ -->
       <section class="panel" id="panel-retirada">
         <div class="card">
           <h2>Registrar retirada</h2>
@@ -410,7 +357,7 @@ tbody tr:hover td{background:#f8fafc}
         </div>
       </section>
 
-      <!-- DEVOLUÇÃO -->
+      <!-- ============ DEVOLUÇÃO ============ -->
       <section class="panel" id="panel-devolucao">
         <div class="card">
           <h2>Registrar devolução</h2>
@@ -433,7 +380,7 @@ tbody tr:hover td{background:#f8fafc}
         </div>
       </section>
 
-      <!-- BAIXA -->
+      <!-- ============ BAIXA ============ -->
       <section class="panel" id="panel-baixa">
         <div class="card">
           <h2>Dar baixa em livro</h2>
@@ -459,7 +406,7 @@ tbody tr:hover td{background:#f8fafc}
         </div>
       </section>
 
-      <!-- ALUNOS -->
+      <!-- ============ ALUNOS ============ -->
       <section class="panel" id="panel-alunos">
         <div class="card">
           <h2>Cadastrar aluno</h2>
@@ -485,7 +432,7 @@ tbody tr:hover td{background:#f8fafc}
         </div>
       </section>
 
-      <!-- BIBLIOTECÁRIOS -->
+      <!-- ============ BIBLIOTECÁRIOS ============ -->
       <section class="panel" id="panel-bibliotecarios">
         <div class="card">
           <h2>Cadastrar bibliotecário</h2>
@@ -503,7 +450,7 @@ tbody tr:hover td{background:#f8fafc}
         </div>
       </section>
 
-      <!-- USUÁRIOS -->
+      <!-- ============ USUÁRIOS ============ -->
       <section class="panel" id="panel-usuarios">
         <div class="card">
           <h2>Novo usuário de acesso</h2>
@@ -528,8 +475,8 @@ tbody tr:hover td{background:#f8fafc}
         </div>
       </section>
 
-    </main>
-  </div>
+    </div>
+  </main>
 </div>
 
 <!-- ============ MODAL SCANNER ============ -->
@@ -560,17 +507,38 @@ tbody tr:hover td{background:#f8fafc}
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyTEpbFCWseb27D3WicKJA_xgxXH4KhamaIYPAisrjVmTMGtDQhFc0uzMKYFItsSZlJ/exec';
 
 /* ==========================================================
-   CONSTANTES DE PERSISTÊNCIA
+   PERSISTÊNCIA DE SESSÃO
    ========================================================== */
-const LS_TOKEN = 'biblioteca_token';
-const LS_USER  = 'biblioteca_usuario';
+const STORAGE_KEY = 'biblioteca.sessao.v1';
+
+function salvarSessao(token, usuario) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, usuario, ts: Date.now() }));
+  } catch (_) { /* noop (modo privado) */ }
+}
+
+function lerSessao() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.token || !obj.usuario) return null;
+    return obj;
+  } catch (_) { return null; }
+}
+
+function limparSessao() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+}
 
 /* ==========================================================
    ESTADO E HELPERS
    ========================================================== */
 let TOKEN = null;
 let USUARIO = null;
+let ABA_ATUAL = 'dashboard';
 
+/* Caches em memória para os info-panels */
 let _livroDispCache = {};
 let _empCache = {};
 let _livroPorTitulo = {};
@@ -622,7 +590,7 @@ function badge(status) {
 function tratarErroSessao(e) {
   if (e && /Sess[ãa]o expirada/i.test(e.message)) {
     alert('Sua sessão expirou. Faça login novamente.');
-    logout();
+    logout(true);
   }
 }
 
@@ -639,139 +607,15 @@ function ensureSelectReady(sel, defaultText) {
   }
 }
 
-function debounce(fn, wait) {
-  let t;
-  return function(...args) {
-    clearTimeout(t);
-    t = setTimeout(() => fn.apply(this, args), wait);
-  };
+/* Aplica o estado de "tem conteúdo" ao workspace (para o layout desktop) */
+function atualizarLayoutWorkspace() {
+  const ws = $('workspace');
+  if (!ws) return;
+  ws.classList.toggle('has-content', ABA_ATUAL !== 'dashboard');
 }
 
 /* ==========================================================
-   PERSISTÊNCIA DE SESSÃO
-   ========================================================== */
-function saveSession(token, usuario) {
-  try {
-    localStorage.setItem(LS_TOKEN, token);
-    localStorage.setItem(LS_USER, JSON.stringify(usuario));
-  } catch (e) { console.warn('Não foi possível salvar sessão:', e); }
-}
-
-function clearSavedSession() {
-  try {
-    localStorage.removeItem(LS_TOKEN);
-    localStorage.removeItem(LS_USER);
-  } catch (e) {}
-}
-
-async function tryRestoreSession() {
-  let savedToken = null, savedUsuario = null;
-  try {
-    savedToken = localStorage.getItem(LS_TOKEN);
-    savedUsuario = localStorage.getItem(LS_USER);
-  } catch (e) { return { status: 'none' }; }
-
-  if (!savedToken || !savedUsuario) return { status: 'none' };
-
-  let usuario;
-  try {
-    usuario = JSON.parse(savedUsuario);
-  } catch (e) {
-    clearSavedSession();
-    return { status: 'none' };
-  }
-
-  TOKEN = savedToken;
-  USUARIO = usuario;
-
-  try {
-    const dashData = await callAuth('dashboard');
-    $('user-name').textContent = usuario.nome || '';
-    $('nav-usuarios').classList.toggle('hidden', usuario.perfil !== 'admin');
-    $('login-screen').classList.add('hidden');
-    $('app').classList.remove('hidden');
-    return { status: 'ok', dashData, usuario };
-  } catch (e) {
-    TOKEN = null; USUARIO = null;
-    clearSavedSession();
-    return { status: 'expired' };
-  }
-}
-
-/* Sincroniza logout entre abas */
-window.addEventListener('storage', (e) => {
-  if (e.key === LS_TOKEN && !e.newValue) {
-    TOKEN = null; USUARIO = null;
-    $('app').classList.add('hidden');
-    $('login-screen').classList.remove('hidden');
-    $('login-pass').value = '';
-  }
-});
-
-/* ==========================================================
-   LAYOUT / NAVEGAÇÃO
-   ========================================================== */
-function isDesktop() {
-  return window.innerWidth >= 1024;
-}
-
-function activateDashboard(opts = {}) {
-  document.querySelectorAll('.nav-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.panel === 'dashboard'));
-  $('sidebar').classList.add('active');
-  $('main-content').classList.remove('active');
-  if (!opts.skipLoad) carregarDashboard();
-}
-
-function activatePanel(name, opts = {}) {
-  document.querySelectorAll('.nav-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.panel === name));
-  document.querySelectorAll('.panel').forEach(p =>
-    p.classList.toggle('active', p.id === 'panel-' + name));
-  $('sidebar').classList.remove('active');
-  $('main-content').classList.add('active');
-  if (opts.skipLoad) return;
-
-  switch (name) {
-    case 'catalogo':       buscarCatalogo(); break;
-    case 'retirada':       carregarLivrosDisponiveis(); carregarTurmas(); break;
-    case 'devolucao':      carregarEmprestimosAtivos(); carregarHistorico(); break;
-    case 'baixa':          carregarParaBaixa(); break;
-    case 'alunos':         carregarTurmas(); break;
-    case 'bibliotecarios': carregarBibliotecarios(); break;
-    case 'usuarios':       carregarUsuarios(); break;
-  }
-}
-
-function initLayout() {
-  if (isDesktop()) {
-    if (!document.querySelector('.panel.active')) {
-      activatePanel('catalogo', { skipLoad: true });
-    }
-  } else {
-    const sidebarActive = $('sidebar').classList.contains('active');
-    const mainActive = $('main-content').classList.contains('active');
-    if (!sidebarActive && !mainActive) {
-      activateDashboard({ skipLoad: true });
-    }
-  }
-}
-
-window.addEventListener('resize', debounce(initLayout, 150));
-
-document.querySelectorAll('.nav-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const panel = btn.dataset.panel;
-    if (panel === 'dashboard') {
-      activateDashboard();
-    } else {
-      activatePanel(panel);
-    }
-  });
-});
-
-/* ==========================================================
-   BUSCA DE LIVRO POR ISBN (local)
+   BUSCA DE LIVRO POR ISBN (local, com fallback)
    ========================================================== */
 async function buscarLivrosPorIsbn(isbn) {
   const code = String(isbn).trim();
@@ -796,7 +640,7 @@ async function buscarLivrosPorIsbn(isbn) {
 }
 
 /* ==========================================================
-   BUSCA DE DADOS NA INTERNET
+   BUSCA DE DADOS DO LIVRO NA INTERNET (Open Library + BrasilAPI)
    ========================================================== */
 async function fetchJsonComTimeout(url, timeoutMs = 8000) {
   const ctrl = new AbortController();
@@ -890,7 +734,7 @@ async function buscarLivroOnline(termo) {
 }
 
 /* ==========================================================
-   PREVIEW DE CAPA E PREENCHIMENTO DO CADASTRO
+   PREVIEW DE CAPA NO CADASTRO
    ========================================================== */
 function mostrarCapaPreview(dados) {
   if (!dados) { limparCapaPreview(); return; }
@@ -990,7 +834,7 @@ function abrirScanner(target) {
     { facingMode: 'environment' },
     { fps: 10, qrbox: { width: 280, height: 160 }, aspectRatio: 1.6 },
     (decodedText) => processarCodigo(decodedText),
-    () => {}
+    () => { /* ignora falhas de leitura */ }
   ).then(() => {
     scannerAtivo = true;
   }).catch((err) => {
@@ -1003,7 +847,9 @@ function abrirScanner(target) {
 async function fecharScanner() {
   $('scanner-modal').classList.add('hidden');
   if (html5QrCode) {
-    try { if (scannerAtivo) await html5QrCode.stop(); } catch (_) {}
+    try {
+      if (scannerAtivo) await html5QrCode.stop();
+    } catch (_) { /* noop */ }
     try { html5QrCode.clear(); } catch (_) {}
     html5QrCode = null;
   }
@@ -1032,7 +878,71 @@ function processarCodigo(codigo) {
 }
 
 /* ==========================================================
-   LOGIN
+   UI: ENTRAR/SAIR DA APLICAÇÃO
+   ========================================================== */
+function aplicarSessao(usuario) {
+  $('user-name').textContent = usuario.nome;
+  $('nav-usuarios').classList.toggle('hidden', usuario.perfil !== 'admin');
+  $('login-screen').classList.add('hidden');
+  $('app').classList.remove('hidden');
+}
+
+function irParaAba(nome) {
+  const btn = document.querySelector(`.nav-btn[data-panel="${nome}"]`);
+  if (!btn) return;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  $('panel-' + nome).classList.add('active');
+  ABA_ATUAL = nome;
+  atualizarLayoutWorkspace();
+
+  switch (nome) {
+    case 'dashboard':    carregarDashboard();       break;
+    case 'catalogo':     buscarCatalogo();          break;
+    case 'retirada':     carregarLivrosDisponiveis(); carregarTurmas(); break;
+    case 'devolucao':    carregarEmprestimosAtivos(); carregarHistorico(); break;
+    case 'baixa':        carregarParaBaixa();       break;
+    case 'alunos':       carregarTurmas();          break;
+    case 'bibliotecarios': carregarBibliotecarios(); break;
+    case 'usuarios':     carregarUsuarios();        break;
+  }
+}
+
+/* ==========================================================
+   INICIALIZAÇÃO — RESTAURA SESSÃO SE HOUVER
+   ========================================================== */
+async function iniciarApp() {
+  const sess = lerSessao();
+  if (!sess) {
+    $('login-screen').classList.remove('hidden');
+    return;
+  }
+  // Há sessão salva — valida chamando dashboard
+  TOKEN = sess.token;
+  USUARIO = sess.usuario;
+  showLoad();
+  try {
+    const d = await callAuth('dashboard');
+    hideLoad();
+    aplicarSessao(USUARIO);
+    // já temos os dados do dashboard, aproveitamos
+    aplicarDashboard(d);
+    carregarTurmas();
+    // garante layout inicial coerente (dashboard visível no desktop)
+    ABA_ATUAL = 'dashboard';
+    atualizarLayoutWorkspace();
+  } catch (e) {
+    hideLoad();
+    // token inválido/expirado
+    limparSessao();
+    TOKEN = null; USUARIO = null;
+    $('login-screen').classList.remove('hidden');
+  }
+}
+
+/* ==========================================================
+   LOGIN / LOGOUT
    ========================================================== */
 $('login-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -1045,14 +955,12 @@ $('login-form').addEventListener('submit', async (ev) => {
     if (!r.sucesso) { showMsg('login-msg', r.mensagem, 'err'); return; }
     TOKEN = r.token;
     USUARIO = r.usuario;
-    saveSession(TOKEN, USUARIO);
-    $('user-name').textContent = r.usuario.nome;
-    $('nav-usuarios').classList.toggle('hidden', r.usuario.perfil !== 'admin');
-    $('login-screen').classList.add('hidden');
-    $('app').classList.remove('hidden');
+    salvarSessao(TOKEN, USUARIO);
+    aplicarSessao(USUARIO);
     carregarDashboard();
     carregarTurmas();
-    initLayout();
+    ABA_ATUAL = 'dashboard';
+    atualizarLayoutWorkspace();
   } catch (e) {
     showMsg('login-msg', 'Erro: ' + e.message, 'err');
   } finally {
@@ -1060,20 +968,29 @@ $('login-form').addEventListener('submit', async (ev) => {
   }
 });
 
-async function logout() {
-  try { if (TOKEN) await callGAS('logout', TOKEN); } catch(_) {}
+async function logout(forcar) {
+  if (!forcar && !confirm('Deseja sair da sua conta?')) return;
+  const tk = TOKEN;
+  limparSessao();
   TOKEN = null; USUARIO = null;
-  clearSavedSession();
   _livroDispCache = {}; _empCache = {}; _livroPorTitulo = {};
   $('app').classList.add('hidden');
   $('login-screen').classList.remove('hidden');
   $('login-pass').value = '';
+  try { if (tk) await callGAS('logout', tk); } catch(_) {}
 }
+
+/* ==========================================================
+   NAVEGAÇÃO
+   ========================================================== */
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => irParaAba(btn.dataset.panel));
+});
 
 /* ==========================================================
    DASHBOARD
    ========================================================== */
-function renderDashboard(d) {
+function aplicarDashboard(d) {
   $('stat-livros').textContent = d.totalLivros;
   $('stat-livros-sub').textContent =
     d.livrosDisponiveis + ' disp. · ' +
@@ -1083,31 +1000,31 @@ function renderDashboard(d) {
   $('stat-ativos').textContent = d.emprestimosAtivos;
   $('stat-atrasados').textContent = d.totalAtrasados;
 
-  let html = '';
+  let html = '<table><thead><tr>' +
+    '<th>Aluno</th><th>Turma</th><th>Livro</th>' +
+    '<th>Prazo</th><th>Atraso</th></tr></thead><tbody>';
+
   if (!d.atrasados.length) {
-    html = '<div class="empty">🎉 Nenhum livro em atraso.</div>';
+    html += '<tr><td colspan="5" class="empty">🎉 Nenhum livro em atraso.</td></tr>';
   } else {
     d.atrasados.forEach(a => {
-      html += `<div class="atraso-item">
-        <div class="atraso-header">
-          <strong>${escapeHtml(a.alunoNome)}</strong>
-          <span class="badge badge-turma">${escapeHtml(a.turma)}</span>
-        </div>
-        <div class="atraso-livro">${escapeHtml(a.titulo)}</div>
-        <div class="atraso-footer">
-          <span>Prazo: ${escapeHtml(a.prazo)}</span>
-          <span class="badge badge-atraso">${a.diasAtraso}d</span>
-        </div>
-      </div>`;
+      html += `<tr>
+        <td><strong>${escapeHtml(a.alunoNome)}</strong></td>
+        <td><span class="badge badge-turma">${escapeHtml(a.turma)}</span></td>
+        <td>${escapeHtml(a.titulo)}</td>
+        <td>${escapeHtml(a.prazo)}</td>
+        <td><span class="badge badge-atraso">${a.diasAtraso} dia(s)</span></td>
+      </tr>`;
     });
   }
+  html += '</tbody></table>';
   $('tabela-atrasados').innerHTML = html;
 }
 
-async function carregarDashboard(preloaded) {
+async function carregarDashboard() {
   try {
-    const d = preloaded || await callAuth('dashboard');
-    renderDashboard(d);
+    const d = await callAuth('dashboard');
+    aplicarDashboard(d);
   } catch (e) { tratarErroSessao(e); }
 }
 
@@ -1678,19 +1595,9 @@ $('scanner-modal').addEventListener('click', (ev) => {
 });
 
 /* ==========================================================
-   BOOTSTRAP — restaura sessão (se houver) ao carregar a página
+   BOOT
    ========================================================== */
-(async function bootstrap() {
-  const result = await tryRestoreSession();
-
-  if (result.status === 'ok') {
-    renderDashboard(result.dashData);
-    carregarTurmas();
-    initLayout();
-  } else if (result.status === 'expired') {
-    showMsg('login-msg', 'Sessão expirada. Faça login novamente.', 'err');
-  }
-})();
+document.addEventListener('DOMContentLoaded', iniciarApp);
 </script>
 </body>
 </html>
