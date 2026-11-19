@@ -15,7 +15,6 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 html{
-  /* Evita rolagem horizontal e zoom em mobile */
   overflow-x:hidden;
   -webkit-text-size-adjust:100%;
   text-size-adjust:100%;
@@ -33,7 +32,6 @@ body{
 button{font-family:inherit;cursor:pointer;border:none;background:none}
 input,select{font-family:inherit}
 
-/* Impede zoom em duplo toque e pinch em todo o app (mobile) */
 @media(max-width:1023px){
   html,body{
     touch-action:pan-y;
@@ -98,7 +96,6 @@ input,select{font-family:inherit}
 
 .main{flex:1;max-width:1400px;width:100%;margin:0 auto;padding:28px 24px}
 
-/* Painel visível */
 .panel{display:none;animation:fadeIn .2s}
 .panel.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -124,11 +121,10 @@ input,select{font-family:inherit}
     align-items:start;
   }
 
-  /* Dashboard vira coluna esquerda fixa no desktop */
   #panel-dashboard{
-    display:block;              /* sempre visível no desktop */
+    display:block;
     position:sticky;
-    top:88px;                   /* abaixo do topbar sticky (64px) + folga */
+    top:88px;
     align-self:start;
     max-height:calc(100vh - 100px);
     overflow-y:auto;
@@ -137,13 +133,8 @@ input,select{font-family:inherit}
   #panel-dashboard::-webkit-scrollbar{width:6px}
   #panel-dashboard::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
 
-  /* Painéis de conteúdo nunca escondem o dashboard no desktop */
   .panel.active:not(#panel-dashboard){display:block}
-
-  /* Por padrão, sem aba selecionada o dashboard é o único visível */
   .workspace:not(.has-content) #panel-dashboard{grid-column:1 / -1;max-height:none;position:static;overflow:visible}
-
-  /* Quando há outra aba selecionada, ajusta layout */
   .workspace.has-content #panel-dashboard{grid-column:1}
   .workspace.has-content .panel.active:not(#panel-dashboard){grid-column:2}
 }
@@ -176,6 +167,7 @@ tbody tr:hover td{background:#f8fafc}
 .badge-atraso{background:#fee2e2;color:#991b1b;margin-left:6px}
 .badge-turma{background:#e0e7ff;color:#3730a3}
 .badge-fonte{background:#f1f5f9;color:#475569;font-size:10px;margin-left:8px}
+.badge-qtd{background:#eef2ff;color:#4338ca;font-weight:700}
 
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
 
@@ -189,10 +181,20 @@ tbody tr:hover td{background:#f8fafc}
   margin-top:10px;
   font-size:13px;
 }
+.book-info-flex{display:flex;gap:14px;align-items:flex-start}
+.book-info-capa{width:68px;height:100px;object-fit:cover;border-radius:6px;background:#e2e8f0;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.book-info-dados{flex:1;min-width:0}
 .book-info .info-row{margin-bottom:6px;color:var(--text);line-height:1.5}
 .book-info .info-row:last-child{margin-bottom:0}
 .book-info .info-row strong{color:var(--muted);font-weight:600;margin-right:4px}
 .book-info .badge{margin-left:6px}
+
+/* Miniaturas de capa na tabela do catálogo */
+.capa-thumb{width:40px;height:58px;object-fit:cover;border-radius:4px;background:#e2e8f0;display:block;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.capa-placeholder{width:40px;height:58px;border-radius:4px;background:#e2e8f0;color:#94a3b8;display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* Sugestões de busca por título no cadastro */
+.sugestoes-titulo{margin-bottom:16px;border:1px solid var(--border);border-radius:10px;background:#f8fafc;padding:12px}
 
 /* Scanner de código de barras */
 .scanner-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;backdrop-filter:blur(3px)}
@@ -316,12 +318,22 @@ tbody tr:hover td{background:#f8fafc}
           </div>
           <div id="tabela-catalogo" class="table-wrap"></div>
         </div>
+
         <div class="card" id="card-cadastro-livro">
           <h2>Cadastrar novo livro</h2>
           <div class="grid-2">
-            <div class="input-group"><label>Título *</label><input id="cad-titulo"></div>
+            <div class="input-group">
+              <label>Título *</label>
+              <div class="input-with-btn">
+                <input id="cad-titulo" placeholder="Digite o título do livro…">
+                <button type="button" class="btn btn-ghost" onclick="buscarPorTituloCadastro()" title="Buscar livro e capa pelo título">🔍 Buscar</button>
+              </div>
+            </div>
             <div class="input-group"><label>Autor *</label><input id="cad-autor"></div>
           </div>
+
+          <div id="cad-sugestoes-titulo" class="sugestoes-titulo hidden"></div>
+
           <div class="input-group">
             <label>ISBN / Código de barras</label>
             <div class="input-with-btn">
@@ -330,6 +342,7 @@ tbody tr:hover td{background:#f8fafc}
               <button type="button" class="btn btn-ghost" onclick="buscarDadosLivroManual()" title="Buscar dados do livro na internet pelo ISBN">🔍 Buscar online</button>
             </div>
           </div>
+
           <div id="cad-capa-preview" class="capa-preview hidden">
             <img id="cad-capa-img" src="" alt="Capa">
             <div class="info">
@@ -338,7 +351,9 @@ tbody tr:hover td{background:#f8fafc}
               <div class="fonte" id="cad-preview-fonte"></div>
             </div>
           </div>
-          <div class="grid-2">
+
+          <div class="grid-3">
+            <div class="input-group"><label>Quantidade *</label><input id="cad-qtd" type="number" min="1" value="1"></div>
             <div class="input-group"><label>Ano</label><input id="cad-ano" type="number"></div>
             <div class="input-group"><label>Localização</label><input id="cad-local" placeholder="Ex: Estante A3"></div>
           </div>
@@ -537,17 +552,14 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyTEpbFCWseb27D3Wic
    BLOQUEIO DE ZOOM E ROLAGEM LATERAL (MOBILE)
    ========================================================== */
 (function bloquearZoomMobile() {
-  // Impede gesto de pinça (pinch-to-zoom)
   document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
   document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
   document.addEventListener('gestureend', function (e) { e.preventDefault(); }, { passive: false });
 
-  // Impede duplo toque para zoom
   let lastTouchEnd = 0;
   document.addEventListener('touchend', function (e) {
     const now = Date.now();
     if (now - lastTouchEnd <= 300) {
-      // Só previne se o alvo não for um campo editável (para não travar foco/teclado)
       const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
       if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') {
         e.preventDefault();
@@ -556,7 +568,6 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyTEpbFCWseb27D3Wic
     lastTouchEnd = now;
   }, { passive: false });
 
-  // Impede Ctrl+scroll (zoom desktop) e Ctrl + / Ctrl -
   document.addEventListener('wheel', function (e) {
     if (e.ctrlKey || e.metaKey) e.preventDefault();
   }, { passive: false });
@@ -567,7 +578,6 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyTEpbFCWseb27D3Wic
     }
   });
 
-  // Impede rolagem horizontal residual
   document.addEventListener('touchmove', function (e) {
     if (e.touches.length > 1) {
       e.preventDefault();
@@ -583,7 +593,7 @@ const STORAGE_KEY = 'biblioteca.sessao.v1';
 function salvarSessao(token, usuario) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, usuario, ts: Date.now() }));
-  } catch (_) { /* noop (modo privado) */ }
+  } catch (_) {}
 }
 
 function lerSessao() {
@@ -607,10 +617,11 @@ let TOKEN = null;
 let USUARIO = null;
 let ABA_ATUAL = 'dashboard';
 
-/* Caches em memória para os info-panels */
 let _livroDispCache = {};
 let _empCache = {};
 let _livroPorTitulo = {};
+const _capaCache = {};         // cache por ISBN
+const _capaTituloCache = {};   // cache por "titulo|autor"
 
 const $ = id => document.getElementById(id);
 const showLoad = () => $('loading-overlay').classList.remove('hidden');
@@ -676,7 +687,6 @@ function ensureSelectReady(sel, defaultText) {
   }
 }
 
-/* Aplica o estado de "tem conteúdo" ao workspace (para o layout desktop) */
 function atualizarLayoutWorkspace() {
   const ws = $('workspace');
   if (!ws) return;
@@ -684,7 +694,81 @@ function atualizarLayoutWorkspace() {
 }
 
 /* ==========================================================
-   BUSCA DE LIVRO POR ISBN (local, com fallback)
+   BUSCA ROBUSTA DE CAPAS (ISBN + TÍTULO/AUTOR + MÚLTIPLAS APIS)
+   ========================================================== */
+function limparIsbn(isbn) {
+  return String(isbn || '').replace(/[^0-9Xx]/g, '').toUpperCase();
+}
+
+function pareceIsbn(termo) {
+  const clean = limparIsbn(termo);
+  return /^(\d{9}[\dX]|\d{13})$/.test(clean);
+}
+
+function normalizarUrlCapa(url) {
+  if (!url) return null;
+  let u = String(url).trim().replace(/^http:\/\//i, 'https://');
+  // Melhora nitidez nas imagens do Google Books quando possível
+  u = u.replace('&edge=curl', '');
+  return u;
+}
+
+function resolverCapaRapida(isbn, titulo, autor) {
+  const clean = limparIsbn(isbn);
+  if (clean && _capaCache[clean]) return _capaCache[clean];
+  const tKey = `${String(titulo || '').trim().toLowerCase()}|${String(autor || '').trim().toLowerCase()}`;
+  if (titulo && _capaTituloCache[tKey]) return _capaTituloCache[tKey];
+  if (clean && pareceIsbn(clean)) {
+    return `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(clean)}-M.jpg?default=false`;
+  }
+  return null;
+}
+
+async function obterCapaRobusta(isbn, titulo, autor) {
+  const clean = limparIsbn(isbn);
+  const tKey = `${String(titulo || '').trim().toLowerCase()}|${String(autor || '').trim().toLowerCase()}`;
+
+  if (clean && _capaCache[clean] !== undefined && _capaCache[clean] !== null) {
+    return _capaCache[clean];
+  }
+  if (titulo && _capaTituloCache[tKey] !== undefined && _capaTituloCache[tKey] !== null) {
+    return _capaTituloCache[tKey];
+  }
+
+  // 1) Tenta pelo ISBN (se parecer um ISBN válido)
+  if (clean && pareceIsbn(clean)) {
+    try {
+      const resIsbn = await buscarLivroOnline(clean);
+      const comCapa = resIsbn.find(r => r.capa);
+      if (comCapa && comCapa.capa) {
+        _capaCache[clean] = comCapa.capa;
+        if (titulo) _capaTituloCache[tKey] = comCapa.capa;
+        return comCapa.capa;
+      }
+    } catch (_) {}
+  }
+
+  // 2) Fallback robusto: busca pelo Título + Autor caso ISBN falhe ou não exista
+  if (titulo) {
+    try {
+      const consulta = autor ? `${titulo} ${autor}` : titulo;
+      const resTit = await buscarLivroOnline(consulta);
+      const comCapa = resTit.find(r => r.capa);
+      if (comCapa && comCapa.capa) {
+        if (clean) _capaCache[clean] = comCapa.capa;
+        _capaTituloCache[tKey] = comCapa.capa;
+        return comCapa.capa;
+      }
+    } catch (_) {}
+  }
+
+  if (clean) _capaCache[clean] = null;
+  if (titulo) _capaTituloCache[tKey] = null;
+  return null;
+}
+
+/* ==========================================================
+   BUSCA DE LIVRO POR ISBN NO ACERVO LOCAL
    ========================================================== */
 async function buscarLivrosPorIsbn(isbn) {
   const code = String(isbn).trim();
@@ -709,7 +793,7 @@ async function buscarLivrosPorIsbn(isbn) {
 }
 
 /* ==========================================================
-   BUSCA DE DADOS DO LIVRO NA INTERNET (Open Library + BrasilAPI)
+   BUSCA DE DADOS E CAPA NA INTERNET (Google Books + Open Library + BrasilAPI)
    ========================================================== */
 async function fetchJsonComTimeout(url, timeoutMs = 8000) {
   const ctrl = new AbortController();
@@ -723,11 +807,46 @@ async function fetchJsonComTimeout(url, timeoutMs = 8000) {
   }
 }
 
+async function buscarGoogleBooks(query, maxResults = 6, langPt = true) {
+  const langParam = langPt ? '&langRestrict=pt' : '';
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}${langParam}`;
+  const data = await fetchJsonComTimeout(url);
+  if (!data || !data.items || !data.items.length) return [];
+
+  return data.items.map(item => {
+    const info = item.volumeInfo || {};
+    const ids = info.industryIdentifiers || [];
+    const isbn13 = ids.find(i => i.type === 'ISBN_13');
+    const isbn10 = ids.find(i => i.type === 'ISBN_10');
+    const isbn = (isbn13 && isbn13.identifier) || (isbn10 && isbn10.identifier) || '';
+
+    let capa = null;
+    if (info.imageLinks) {
+      capa = normalizarUrlCapa(
+        info.imageLinks.medium ||
+        info.imageLinks.thumbnail ||
+        info.imageLinks.smallThumbnail ||
+        null
+      );
+    }
+
+    return {
+      titulo: info.title || '',
+      autores: Array.isArray(info.authors) ? info.authors.join(', ') : '',
+      ano: info.publishedDate ? String(info.publishedDate).substring(0, 4) : '',
+      editora: info.publisher || '',
+      isbn: isbn,
+      capa: capa,
+      fonte: 'Google Books'
+    };
+  }).filter(r => r.titulo);
+}
+
 async function buscarOpenLibraryPorIsbn(isbn) {
-  const url = `https://openlibrary.org/search.json?isbn=${encodeURIComponent(isbn)}&limit=1`;
+  const url = `https://openlibrary.org/search.json?isbn=${encodeURIComponent(isbn)}&limit=2`;
   const data = await fetchJsonComTimeout(url);
   if (!data || !data.docs || !data.docs.length) return null;
-  const doc = data.docs[0];
+  const doc = data.docs.find(d => d.cover_i) || data.docs[0];
   return {
     titulo: doc.title || '',
     autores: doc.author_name ? doc.author_name.join(', ') : '',
@@ -749,16 +868,16 @@ async function buscarBrasilApiPorIsbn(isbn) {
     ano: data.year || '',
     editora: data.publisher || '',
     isbn: isbn,
-    capa: data.cover_url || null,
+    capa: normalizarUrlCapa(data.cover_url || null),
     fonte: 'BrasilAPI'
   };
 }
 
 async function buscarOpenLibraryPorTitulo(termo) {
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(termo)}&limit=8&fields=title,author_name,first_publish_year,publisher,cover_i,isbn`;
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(termo)}&limit=6&fields=title,author_name,first_publish_year,publisher,cover_i,isbn`;
   const data = await fetchJsonComTimeout(url);
   if (!data || !data.docs) return [];
-  return data.docs.slice(0, 8).map(doc => ({
+  return data.docs.slice(0, 6).map(doc => ({
     titulo: doc.title || '',
     autores: doc.author_name ? doc.author_name.join(', ') : '',
     ano: doc.first_publish_year || '',
@@ -769,11 +888,6 @@ async function buscarOpenLibraryPorTitulo(termo) {
   })).filter(r => r.titulo);
 }
 
-function pareceIsbn(termo) {
-  const clean = String(termo).replace(/[\s-]/g, '');
-  return /^(\d{9}[\dXx]|\d{13})$/.test(clean);
-}
-
 async function buscarLivroOnline(termo) {
   const t = String(termo || '').trim();
   if (!t) return [];
@@ -782,28 +896,67 @@ async function buscarLivroOnline(termo) {
   const vistos = new Set();
   const push = (r) => {
     if (!r || !r.titulo) return;
-    const key = r.titulo.trim().toLowerCase();
-    if (vistos.has(key)) return;
+    const key = r.titulo.trim().toLowerCase() + '|' + (r.autores || '').trim().toLowerCase();
+    if (vistos.has(key)) {
+      const existente = resultados.find(x => (x.titulo.trim().toLowerCase() + '|' + (x.autores || '').trim().toLowerCase()) === key);
+      if (existente && !existente.capa && r.capa) existente.capa = r.capa;
+      if (existente && !existente.isbn && r.isbn) existente.isbn = r.isbn;
+      return;
+    }
     vistos.add(key);
     resultados.push(r);
   };
 
   if (pareceIsbn(t)) {
-    const isbn = t.replace(/[\s-]/g, '');
-    try { push(await buscarOpenLibraryPorIsbn(isbn)); } catch (e) { console.warn('OpenLibrary falhou:', e); }
-    try { push(await buscarBrasilApiPorIsbn(isbn)); } catch (e) { console.warn('BrasilAPI falhou:', e); }
+    const isbn = limparIsbn(t);
+    const [gbPt, gbGlobal, br, ol] = await Promise.allSettled([
+      buscarGoogleBooks(`isbn:${isbn}`, 2, true),
+      buscarGoogleBooks(`isbn:${isbn}`, 2, false),
+      buscarBrasilApiPorIsbn(isbn),
+      buscarOpenLibraryPorIsbn(isbn)
+    ]);
+    if (gbPt.status === 'fulfilled') gbPt.value.forEach(push);
+    if (gbGlobal.status === 'fulfilled') gbGlobal.value.forEach(push);
+    if (br.status === 'fulfilled' && br.value) push(br.value);
+    if (ol.status === 'fulfilled' && ol.value) push(ol.value);
+
+    // Se encontrou título/autor mas nenhum veio com capa, tenta buscar a capa pelo título encontrado
+    if (resultados.length && !resultados.some(r => r.capa)) {
+      const ref = resultados[0];
+      const qFallback = ref.autores ? `${ref.titulo} ${ref.autores}` : ref.titulo;
+      try {
+        const extra = await buscarGoogleBooks(qFallback, 3, false);
+        const comCapa = extra.find(x => x.capa);
+        if (comCapa) resultados[0].capa = comCapa.capa;
+      } catch (_) {}
+    }
   } else {
-    try {
-      const rs = await buscarOpenLibraryPorTitulo(t);
-      rs.forEach(push);
-    } catch (e) { console.warn('OpenLibrary título falhou:', e); }
+    const [gbPt, gbGlobal, ol] = await Promise.allSettled([
+      buscarGoogleBooks(t, 6, true),
+      buscarGoogleBooks(t, 4, false),
+      buscarOpenLibraryPorTitulo(t)
+    ]);
+    if (gbPt.status === 'fulfilled') gbPt.value.forEach(push);
+    if (gbGlobal.status === 'fulfilled') gbGlobal.value.forEach(push);
+    if (ol.status === 'fulfilled') ol.value.forEach(push);
   }
 
+  // Salva capas encontradas nos caches
+  resultados.forEach(r => {
+    if (r.capa) {
+      if (r.isbn) _capaCache[limparIsbn(r.isbn)] = r.capa;
+      const tKey = `${r.titulo.trim().toLowerCase()}|${(r.autores || '').trim().toLowerCase()}`;
+      _capaTituloCache[tKey] = r.capa;
+    }
+  });
+
+  // Ordena priorizando os que possuem capa
+  resultados.sort((a, b) => (b.capa ? 1 : 0) - (a.capa ? 1 : 0));
   return resultados;
 }
 
 /* ==========================================================
-   PREVIEW DE CAPA NO CADASTRO
+   PREVIEW DE CAPA E PREENCHIMENTO NO CADASTRO
    ========================================================== */
 function mostrarCapaPreview(dados) {
   if (!dados) { limparCapaPreview(); return; }
@@ -854,9 +1007,9 @@ function preencherCadastroComResultado(dados) {
 }
 
 async function preencherDadosLivroCadastro(isbn) {
-  const code = String(isbn || '').trim().replace(/[\s-]/g, '');
+  const code = limparIsbn(isbn);
   if (!code) return;
-  showMsg('msg-cad', '🔍 Buscando dados do livro na internet…', 'ok');
+  showMsg('msg-cad', '🔍 Buscando dados e capa do livro na internet…', 'ok');
   try {
     const resultados = await buscarLivroOnline(code);
     if (!resultados.length) {
@@ -877,6 +1030,55 @@ function buscarDadosLivroManual() {
     return;
   }
   preencherDadosLivroCadastro(isbn);
+}
+
+async function buscarPorTituloCadastro() {
+  const titulo = $('cad-titulo').value.trim();
+  const box = $('cad-sugestoes-titulo');
+  if (!titulo) {
+    showMsg('msg-cad', 'Digite o título do livro primeiro.', 'err');
+    return;
+  }
+
+  box.classList.remove('hidden');
+  box.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:6px">🔍 Buscando livros e capas pelo título…</div>';
+
+  try {
+    const resultados = await buscarLivroOnline(titulo);
+    if (!resultados.length) {
+      box.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:6px">Nenhum livro encontrado com esse título.</div>';
+      return;
+    }
+
+    let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+      '<strong style="font-size:12px;color:var(--text)">Selecione um resultado:</strong>' +
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="$(\'cad-sugestoes-titulo\').classList.add(\'hidden\')">Fechar</button>' +
+      '</div><div class="resultados-online">';
+
+    resultados.forEach((r, i) => {
+      html += `<div class="resultado-item">
+        ${r.capa ? `<img src="${escapeHtml(r.capa)}" alt="" onerror="this.style.display='none'">` : '<div style="width:50px;height:75px;background:#e2e8f0;border-radius:4px;flex-shrink:0"></div>'}
+        <div class="info">
+          <div class="titulo">${escapeHtml(r.titulo)}</div>
+          <div class="sub">${escapeHtml(r.autores || '—')}${r.ano ? ' · ' + escapeHtml(String(r.ano)) : ''}</div>
+          <div class="isbn">ISBN: ${escapeHtml(r.isbn || '—')} <span class="badge badge-fonte">${escapeHtml(r.fonte)}</span></div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" data-sug-idx="${i}">Usar</button>
+      </div>`;
+    });
+    html += '</div>';
+    box.innerHTML = html;
+
+    box.querySelectorAll('[data-sug-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.sugIdx, 10);
+        preencherCadastroComResultado(resultados[idx]);
+        box.classList.add('hidden');
+      });
+    });
+  } catch (e) {
+    box.innerHTML = `<div style="font-size:13px;color:var(--danger);padding:6px">Erro na busca: ${escapeHtml(e.message)}</div>`;
+  }
 }
 
 /* ==========================================================
@@ -903,7 +1105,7 @@ function abrirScanner(target) {
     { facingMode: 'environment' },
     { fps: 10, qrbox: { width: 280, height: 160 }, aspectRatio: 1.6 },
     (decodedText) => processarCodigo(decodedText),
-    () => { /* ignora falhas de leitura */ }
+    () => {}
   ).then(() => {
     scannerAtivo = true;
   }).catch((err) => {
@@ -918,7 +1120,7 @@ async function fecharScanner() {
   if (html5QrCode) {
     try {
       if (scannerAtivo) await html5QrCode.stop();
-    } catch (_) { /* noop */ }
+    } catch (_) {}
     try { html5QrCode.clear(); } catch (_) {}
     html5QrCode = null;
   }
@@ -967,14 +1169,14 @@ function irParaAba(nome) {
   atualizarLayoutWorkspace();
 
   switch (nome) {
-    case 'dashboard':    carregarDashboard();       break;
-    case 'catalogo':     buscarCatalogo();          break;
-    case 'retirada':     carregarLivrosDisponiveis(); carregarTurmas(); break;
-    case 'devolucao':    carregarEmprestimosAtivos(); carregarHistorico(); break;
-    case 'baixa':        carregarParaBaixa();       break;
-    case 'alunos':       carregarTurmas();          break;
-    case 'bibliotecarios': carregarBibliotecarios(); break;
-    case 'usuarios':     carregarUsuarios();        break;
+    case 'dashboard':      carregarDashboard();       break;
+    case 'catalogo':       buscarCatalogo();          break;
+    case 'retirada':       carregarLivrosDisponiveis(); carregarTurmas(); break;
+    case 'devolucao':      carregarEmprestimosAtivos(); carregarHistorico(); break;
+    case 'baixa':          carregarParaBaixa();       break;
+    case 'alunos':         carregarTurmas();          break;
+    case 'bibliotecarios': carregarBibliotecarios();  break;
+    case 'usuarios':       carregarUsuarios();        break;
   }
 }
 
@@ -987,7 +1189,6 @@ async function iniciarApp() {
     $('login-screen').classList.remove('hidden');
     return;
   }
-  // Há sessão salva — valida chamando dashboard
   TOKEN = sess.token;
   USUARIO = sess.usuario;
   showLoad();
@@ -995,15 +1196,12 @@ async function iniciarApp() {
     const d = await callAuth('dashboard');
     hideLoad();
     aplicarSessao(USUARIO);
-    // já temos os dados do dashboard, aproveitamos
     aplicarDashboard(d);
     carregarTurmas();
-    // garante layout inicial coerente (dashboard visível no desktop)
     ABA_ATUAL = 'dashboard';
     atualizarLayoutWorkspace();
   } catch (e) {
     hideLoad();
-    // token inválido/expirado
     limparSessao();
     TOKEN = null; USUARIO = null;
     $('login-screen').classList.remove('hidden');
@@ -1194,29 +1392,52 @@ async function buscarCatalogo() {
   const termo = $('busca-termo').value.trim();
   try {
     const livros = await callAuth('listarLivros', termo);
-    let html = '<table><thead><tr><th>ID</th><th>Título</th><th>Autor</th><th>ISBN</th><th>Status</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>Capa</th><th>ID</th><th>Título</th><th>Autor</th><th>ISBN</th><th>Qtd.</th><th>Status</th></tr></thead><tbody>';
     if (!livros.length) {
       if (termo) {
-        html += `<tr><td colspan="5" class="empty">
+        html += `<tr><td colspan="7" class="empty">
           Nenhum livro encontrado no acervo para "${escapeHtml(termo)}".<br><br>
           <button class="btn btn-primary btn-sm" id="btn-busca-online">🔍 Buscar na internet</button>
         </td></tr>`;
       } else {
-        html += '<tr><td colspan="5" class="empty">Nenhum livro encontrado.</td></tr>';
+        html += '<tr><td colspan="7" class="empty">Nenhum livro encontrado.</td></tr>';
       }
     } else {
       livros.forEach(l => {
+        const capaUrl = resolverCapaRapida(l.isbn, l.titulo, l.autor);
+        const qtd = l.quantidade != null ? l.quantidade : (l.status === 'Disponível' ? 1 : 0);
+        const cellId = `cat-capa-${l.id}`;
+
+        const capaHtml = capaUrl
+          ? `<img class="capa-thumb" src="${escapeHtml(capaUrl)}" alt="" onerror="this.outerHTML='<div class=\\'capa-placeholder\\'>📖</div>'">`
+          : `<div class="capa-placeholder">📖</div>`;
+
         html += `<tr>
+          <td id="${cellId}">${capaHtml}</td>
           <td>${l.id}</td>
           <td><strong>${escapeHtml(l.titulo)}</strong></td>
           <td>${escapeHtml(l.autor)}</td>
           <td>${escapeHtml(l.isbn || '—')}</td>
+          <td><span class="badge badge-qtd">${qtd}</span></td>
           <td>${badge(l.status)}</td>
         </tr>`;
       });
     }
     html += '</tbody></table>';
     $('tabela-catalogo').innerHTML = html;
+
+    // Completa em segundo plano as capas que não estavam no cache rápido (até 12 primeiros itens)
+    if (livros && livros.length) {
+      livros.slice(0, 12).forEach(async (l) => {
+        const rapida = resolverCapaRapida(l.isbn, l.titulo, l.autor);
+        if (rapida && !rapida.includes('openlibrary.org')) return;
+        const melhor = await obterCapaRobusta(l.isbn, l.titulo, l.autor);
+        const cell = $(`cat-capa-${l.id}`);
+        if (melhor && cell) {
+          cell.innerHTML = `<img class="capa-thumb" src="${escapeHtml(melhor)}" alt="" onerror="this.outerHTML='<div class=\\'capa-placeholder\\'>📖</div>'">`;
+        }
+      });
+    }
 
     const btnOnline = $('btn-busca-online');
     if (btnOnline) btnOnline.addEventListener('click', () => buscarOnlineNoCatalogo(termo));
@@ -1226,7 +1447,7 @@ async function buscarCatalogo() {
 async function buscarOnlineNoCatalogo(termo) {
   if (!termo) return;
   $('tabela-catalogo').innerHTML =
-    '<div class="empty">🔍 Consultando bases públicas (Open Library / BrasilAPI)…</div>';
+    '<div class="empty">🔍 Consultando bases públicas (Google Books / Open Library / BrasilAPI)…</div>';
   try {
     const resultados = await buscarLivroOnline(termo);
     if (!resultados.length) {
@@ -1273,23 +1494,31 @@ function exibirResultadosOnline(resultados) {
 }
 
 async function cadastrarLivro() {
+  const qtd = parseInt($('cad-qtd').value, 10);
   const dados = {
     titulo:      $('cad-titulo').value.trim(),
     autor:       $('cad-autor').value.trim(),
     isbn:        $('cad-isbn').value.trim(),
+    quantidade:  (!isNaN(qtd) && qtd >= 1) ? qtd : 1,
     ano:         $('cad-ano').value,
     localizacao: $('cad-local').value.trim()
   };
   if (!dados.titulo || !dados.autor)
     return showMsg('msg-cad', 'Preencha Título e Autor.', 'err');
+  if (dados.quantidade < 1)
+    return showMsg('msg-cad', 'A quantidade deve ser pelo menos 1.', 'err');
+
   $('btn-cad').disabled = true;
   try {
     const r = await callAuth('cadastrarLivro', dados);
     showMsg('msg-cad', r.mensagem, r.sucesso ? 'ok' : 'err');
     if (r.sucesso) {
       ['cad-titulo','cad-autor','cad-isbn','cad-ano','cad-local'].forEach(i => $(i).value = '');
+      $('cad-qtd').value = '1';
+      $('cad-sugestoes-titulo').classList.add('hidden');
       limparCapaPreview();
       buscarCatalogo();
+      carregarDashboard();
     }
   } catch (e) { tratarErroSessao(e); showMsg('msg-cad', e.message, 'err'); }
   finally { $('btn-cad').disabled = false; }
@@ -1306,23 +1535,43 @@ async function carregarLivrosDisponiveis() {
 
     const sel = $('ret-livro');
     sel.innerHTML = '<option value="">Selecione um livro…</option>' +
-      livros.map(l => `<option value="${l.id}">${escapeHtml(l.titulo)} — ${escapeHtml(l.autor)} (${l.id})</option>`).join('');
+      livros.map(l => {
+        const qtdTxt = l.quantidade != null ? ` — ${l.quantidade} disp.` : '';
+        return `<option value="${l.id}">${escapeHtml(l.titulo)} — ${escapeHtml(l.autor)} (${l.id}${qtdTxt})</option>`;
+      }).join('');
     $('ret-info').classList.add('hidden');
   } catch (e) { tratarErroSessao(e); }
 }
 
-function mostrarInfoRetirada(livro) {
+async function mostrarInfoRetirada(livro) {
   if (!livro) return;
   const info = $('ret-info');
   const local = (livro.localizacao != null && livro.localizacao !== '') ? livro.localizacao : '—';
+  const qtd = livro.quantidade != null ? livro.quantidade : 1;
+  const capaInicial = resolverCapaRapida(livro.isbn, livro.titulo, livro.autor);
+
   info.innerHTML = `
-    <div class="info-row"><strong>📚 Título:</strong> ${escapeHtml(livro.titulo)}</div>
-    <div class="info-row"><strong>✍️ Autor:</strong> ${escapeHtml(livro.autor)}</div>
-    <div class="info-row"><strong>🔖 ISBN:</strong> ${escapeHtml(livro.isbn || '—')}</div>
-    <div class="info-row"><strong>📍 Localização:</strong> ${escapeHtml(local)}</div>
-    <div class="info-row"><strong>📦 Status:</strong> ${badge(livro.status)}</div>
+    <div class="book-info-flex">
+      <img id="ret-info-capa" class="book-info-capa ${capaInicial ? '' : 'hidden'}"
+           src="${escapeHtml(capaInicial || '')}" alt="Capa"
+           onerror="this.classList.add('hidden')">
+      <div class="book-info-dados">
+        <div class="info-row"><strong>📚 Título:</strong> ${escapeHtml(livro.titulo)}</div>
+        <div class="info-row"><strong>✍️ Autor:</strong> ${escapeHtml(livro.autor)}</div>
+        <div class="info-row"><strong>🔖 ISBN:</strong> ${escapeHtml(livro.isbn || '—')}</div>
+        <div class="info-row"><strong>📍 Localização:</strong> ${escapeHtml(local)}</div>
+        <div class="info-row"><strong>📦 Estoque disponível:</strong> <span class="badge badge-qtd">${qtd} unidade(s)</span> ${badge(livro.status)}</div>
+      </div>
+    </div>
   `;
   info.classList.remove('hidden');
+
+  const capaMelhor = await obterCapaRobusta(livro.isbn, livro.titulo, livro.autor);
+  const imgEl = $('ret-info-capa');
+  if (capaMelhor && imgEl) {
+    imgEl.src = capaMelhor;
+    imgEl.classList.remove('hidden');
+  }
 }
 
 function onRetLivroChange() {
@@ -1341,9 +1590,9 @@ async function scanRetirada(isbn) {
       showMsg('msg-ret', `❌ Nenhum livro encontrado com o código "${isbn}".`, 'err');
       return;
     }
-    const disponiveis = candidatos.filter(l => l.status === 'Disponível');
+    const disponiveis = candidatos.filter(l => l.status === 'Disponível' && (l.quantidade == null || l.quantidade > 0));
     if (!disponiveis.length) {
-      showMsg('msg-ret', `⚠️ Livro "${candidatos[0].titulo}" encontrado, mas não está disponível (status: ${candidatos[0].status}).`, 'err');
+      showMsg('msg-ret', `⚠️ Livro "${candidatos[0].titulo}" encontrado, mas sem unidades disponíveis (status: ${candidatos[0].status}).`, 'err');
       return;
     }
 
@@ -1354,8 +1603,9 @@ async function scanRetirada(isbn) {
     disponiveis.forEach(livro => {
       _livroDispCache[livro.id] = livro;
       if (!idsExistentes.has(String(livro.id))) {
+        const qtdTxt = livro.quantidade != null ? ` — ${livro.quantidade} disp.` : '';
         sel.insertAdjacentHTML('beforeend',
-          `<option value="${livro.id}">${escapeHtml(livro.titulo)} — ${escapeHtml(livro.autor)} (${livro.id})</option>`);
+          `<option value="${livro.id}">${escapeHtml(livro.titulo)} — ${escapeHtml(livro.autor)} (${livro.id}${qtdTxt})</option>`);
       }
     });
     sel.value = disponiveis[0].id;
@@ -1385,7 +1635,8 @@ async function realizarRetirada() {
     if (r.sucesso) {
       $('ret-aluno').value = '';
       $('ret-info').classList.add('hidden');
-      carregarLivrosDisponiveis();
+      await carregarLivrosDisponiveis();
+      carregarDashboard();
     }
   } catch (e) { tratarErroSessao(e); showMsg('msg-ret', e.message, 'err'); }
   finally { $('btn-ret').disabled = false; }
@@ -1415,12 +1666,17 @@ async function carregarEmprestimosAtivos() {
   } catch (e) { tratarErroSessao(e); }
 }
 
-function mostrarInfoDevolucao(livro, emp) {
+async function mostrarInfoDevolucao(livro, emp) {
   if (!emp) return;
   const info = $('dev-info');
   const atraso = emp.diasAtraso > 0
     ? `<span class="badge badge-atraso">${emp.diasAtraso} dia(s) de atraso</span>`
     : `<span class="badge badge-disponivel">No prazo</span>`;
+
+  const isbn = livro ? livro.isbn : (emp.isbn || '');
+  const titulo = livro ? livro.titulo : emp.titulo;
+  const autor = livro ? livro.autor : (emp.autor || '');
+  const capaInicial = resolverCapaRapida(isbn, titulo, autor);
 
   const livroHtml = livro ? `
     <div class="info-row"><strong>📚 Livro:</strong> ${escapeHtml(livro.titulo)}</div>
@@ -1430,12 +1686,27 @@ function mostrarInfoDevolucao(livro, emp) {
     <div class="info-row"><strong>📚 Livro:</strong> ${escapeHtml(emp.titulo)}</div>
   `;
 
-  info.innerHTML = livroHtml + `
-    <div class="info-row"><strong>👤 Aluno:</strong> ${escapeHtml(emp.alunoNome)}</div>
-    <div class="info-row"><strong>🎓 Turma:</strong> ${escapeHtml(emp.turma)}</div>
-    <div class="info-row"><strong>📅 Prazo:</strong> ${escapeHtml(emp.prazo)} ${atraso}</div>
+  info.innerHTML = `
+    <div class="book-info-flex">
+      <img id="dev-info-capa" class="book-info-capa ${capaInicial ? '' : 'hidden'}"
+           src="${escapeHtml(capaInicial || '')}" alt="Capa"
+           onerror="this.classList.add('hidden')">
+      <div class="book-info-dados">
+        ${livroHtml}
+        <div class="info-row"><strong>👤 Aluno:</strong> ${escapeHtml(emp.alunoNome)}</div>
+        <div class="info-row"><strong>🎓 Turma:</strong> ${escapeHtml(emp.turma)}</div>
+        <div class="info-row"><strong>📅 Prazo:</strong> ${escapeHtml(emp.prazo)} ${atraso}</div>
+      </div>
+    </div>
   `;
   info.classList.remove('hidden');
+
+  const capaMelhor = await obterCapaRobusta(isbn, titulo, autor);
+  const imgEl = $('dev-info-capa');
+  if (capaMelhor && imgEl) {
+    imgEl.src = capaMelhor;
+    imgEl.classList.remove('hidden');
+  }
 }
 
 function onDevEmprestimoChange() {
@@ -1511,8 +1782,9 @@ async function realizarDevolucao() {
     showMsg('msg-dev', r.mensagem, r.sucesso ? 'ok' : 'err');
     if (r.sucesso) {
       $('dev-info').classList.add('hidden');
-      carregarEmprestimosAtivos();
+      await carregarEmprestimosAtivos();
       carregarHistorico();
+      carregarDashboard();
     }
   } catch (e) { tratarErroSessao(e); showMsg('msg-dev', e.message, 'err'); }
   finally { $('btn-dev').disabled = false; }
@@ -1561,8 +1833,11 @@ async function carregarParaBaixa() {
       callAuth('listarBibliotecarios')
     ]);
     $('baixa-livro').innerHTML = '<option value="">Selecione um livro…</option>' +
-      livros.filter(l => l.status !== 'Emprestado' && l.status !== 'Baixado')
-        .map(l => `<option value="${l.id}">${escapeHtml(l.titulo)} (${escapeHtml(l.status)})</option>`).join('');
+      livros.filter(l => l.status !== 'Baixado' && (l.quantidade == null || l.quantidade > 0))
+        .map(l => {
+          const qtdTxt = l.quantidade != null ? ` — ${l.quantidade} un.` : '';
+          return `<option value="${l.id}">${escapeHtml(l.titulo)} (${escapeHtml(l.status)}${qtdTxt})</option>`;
+        }).join('');
     $('baixa-bib').innerHTML = '<option value="">Selecione…</option>' +
       bibs.map(b => `<option value="${escapeHtml(b.nome)}">${escapeHtml(b.nome)}</option>`).join('');
   } catch (e) { tratarErroSessao(e); }
@@ -1573,12 +1848,15 @@ async function executarBaixa() {
   const motivo = $('baixa-motivo').value;
   const bib = $('baixa-bib').value;
   if (!id) return showMsg('msg-baixa', 'Selecione um livro.', 'err');
-  if (!confirm('Confirmar baixa deste livro? Ação irreversível.')) return;
+  if (!confirm('Confirmar baixa de 1 exemplar deste livro?')) return;
   $('btn-baixa').disabled = true;
   try {
     const r = await callAuth('darBaixa', id, motivo, bib);
     showMsg('msg-baixa', r.mensagem, r.sucesso ? 'ok' : 'err');
-    if (r.sucesso) carregarParaBaixa();
+    if (r.sucesso) {
+      carregarParaBaixa();
+      carregarDashboard();
+    }
   } catch (e) { tratarErroSessao(e); showMsg('msg-baixa', e.message, 'err'); }
   finally { $('btn-baixa').disabled = false; }
 }
